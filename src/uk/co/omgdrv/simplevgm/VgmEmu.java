@@ -244,8 +244,7 @@ public final class VgmEmu extends ClassicEmu {
                     break;
 
                 default:
-                    switch (cmd & 0xF0)
-                    {
+                    switch (cmd & 0xF0) {
                         case CMD_PCM_DELAY:
                             write_pcm(time, data[pcm_pos++] & 0xFF);
                             time += cmd & 0x0F;
@@ -254,36 +253,8 @@ public final class VgmEmu extends ClassicEmu {
                         case CMD_SHORT_DELAY:
                             time += (cmd & 0x0F) + 1;
                             break;
-
-                        //unsupported two operands
-                        case 0x30:
-                        case 0x40:
-                            pos += 1;
-                            System.out.println(vgmHeader.getIdent() + vgmHeader.getVersionString() +", unsupported command: " + Integer.toHexString(cmd));
-                            break;
-
-                        //unsupported two operands
-                        case 0x50:
-                        case 0xA0:
-                        case 0xB0:
-                            System.out.println(vgmHeader.getIdent() + vgmHeader.getVersionString() +", unsupported command: " + Integer.toHexString(cmd));
-                            pos += 2;
-                            break;
-                        //unsupported three operands
-                        case 0xC0:
-                        case 0xD0:
-                            System.out.println(vgmHeader.getIdent() + vgmHeader.getVersionString() +", unsupported command: " + Integer.toHexString(cmd));
-                            pos += 3;
-                            break;
-                        //unsupported four operands
-                        case 0xE0:
-                        case 0xF0:
-                            System.out.println(vgmHeader.getIdent() + vgmHeader.getVersionString() +", unsupported command: " + Integer.toHexString(cmd));
-                            pos += 4;
-                            break;
                         default:
-                            System.out.println(String.format("Unexpected command: %s, at position: %s", Integer.toHexString(cmd), Integer.toHexString(pos)));
-                            logError();
+                            handleUnsupportedCommand(cmd);
                             break;
                     }
             }
@@ -309,6 +280,45 @@ public final class VgmEmu extends ClassicEmu {
 
         return endTime;
     }
+
+    private void handleUnsupportedCommand(int cmd) {
+        System.out.println(vgmHeader.getIdent() + vgmHeader.getVersionString() + ", unsupported command: " + Integer.toHexString(cmd));
+        switch (cmd & 0xF0) {
+            //unsupported one operand
+            case 0x30:
+            case 0x40:
+                pos += 1;
+                break;
+            //unsupported two operands
+            case 0x50:
+            case 0xA0:
+            case 0xB0:
+                pos += 2;
+                break;
+            //unsupported three operands
+            case 0xC0:
+            case 0xD0:
+                pos += 3;
+                break;
+            //unsupported four operands
+            case 0xE0:
+            case 0xF0:
+                pos += 4;
+                break;
+            case 0x90:  //vgm 1.60, dac stream control 0x90 - 0x95
+                int subCmd = cmd & 0x7;
+                int diff = subCmd < 2 || subCmd == 5 ? 4 : 5;
+                diff = subCmd == 3 ? 10 : diff;
+                diff = subCmd == 4 ? 1 : diff;
+                pos += diff;
+                break;
+            default:
+                System.out.println(String.format("Unexpected command: %s, at position: %s", Integer.toHexString(cmd), Integer.toHexString(pos)));
+                logError();
+                break;
+        }
+    }
+
 
     protected void mixSamples(byte[] out, int out_off, int count)
     {

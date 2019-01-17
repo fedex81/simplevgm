@@ -146,7 +146,8 @@ public class MusicEmu
         if (!trackEnded_)
         {
             trackEnded_ = true;
-            System.out.println("emulation error");
+            System.out.println("Unexpected error");
+            new Exception().printStackTrace();
         }
     }
 

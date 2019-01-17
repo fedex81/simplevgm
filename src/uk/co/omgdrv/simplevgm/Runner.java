@@ -1,4 +1,5 @@
-import uk.co.omgdrv.simplevgm.VGMPlayer;
+package uk.co.omgdrv.simplevgm;
+
 import uk.co.omgdrv.simplevgm.model.PsgProvider;
 import uk.co.omgdrv.simplevgm.util.Util;
 
@@ -19,19 +20,34 @@ import java.util.stream.Collectors;
 public class Runner {
 
     private static boolean DISABLE_PSG = false;
-    private static String VGM_FOLDER = "/data/emu/vgm/"; //"vgm";
-    private static String VGM_FILE = "ghostbuster.vgm";
+    private static String VGM_FOLDER = "."; //"vgm";
+    private static String VGM_FILE = "file.vgm";
 
     private static Predicate<Path> vgmFilesPredicate = p ->
             p.toString().endsWith(".vgm") || p.toString().endsWith(".vgz");
 
 
     public static void main(String[] args) throws Exception {
+        Path path = getPathToPlay(args);
+        boolean isFolder = path.toFile().isDirectory();
+        System.out.println(String.format("Playing %s: %s",
+                (isFolder ? "folder" : "file"), path.toAbsolutePath().toString()));
         PsgProvider psgProvider = DISABLE_PSG ? PsgProvider.NO_SOUND : null;
         VGMPlayer v = VGMPlayer.createInstance(psgProvider, 44100);
         Runner r = new Runner();
-//        r.playAll(v, VGM_FOLDER);
-        r.playRecursive(v, VGM_FOLDER);
+        if(isFolder){
+            r.playRecursive(v, path);
+        } else {
+            r.playOne(v, path);
+        }
+    }
+
+    private static Path getPathToPlay(String[] args){
+        Path p = Paths.get(".");
+        if(args.length > 0){
+             p = Paths.get(args[0]);
+        }
+        return p;
     }
 
     private void playAll(VGMPlayer v, String folderName) throws Exception {
@@ -40,8 +56,7 @@ public class Runner {
         files.stream().forEach(f -> playOne(v, f));
     }
 
-    private void playRecursive(VGMPlayer v, String folderName) throws Exception {
-        Path folder = Paths.get(folderName);
+    private void playRecursive(VGMPlayer v, Path folder) throws Exception {
         Set<Path> fileSet = new HashSet<>();
         Files.walkFileTree(folder, createFileVisitor(fileSet));
         List<Path> list = new ArrayList<>(fileSet);
