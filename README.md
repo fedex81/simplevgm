@@ -1,6 +1,13 @@
 Simple VGM
+----------
+a (very) simple - Java based - [VGM][1] 1.50 player
+ 
 
-a Java based Simple VGM 1.50 player
+How To
+-----
+Download the latest jar file from the releases area  
+and run from the command line:  
+`java -jar simplevgm-19.0117.jar <file>|<folder>`
 
 Credits
 -------
@@ -14,3 +21,5 @@ License
 -------
 
 This software is released under a GPL 2.0 license
+
+[1]: https://en.wikipedia.org/wiki/Video_game_music
