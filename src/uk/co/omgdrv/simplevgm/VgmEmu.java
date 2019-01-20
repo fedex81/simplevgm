@@ -55,16 +55,16 @@ public final class VgmEmu extends ClassicEmu {
 
         // PSG clock rate
         int clockRate = vgmHeader.getSn76489Clk();
-        //TODO should disable PSG?
-        if (clockRate == 0) {
-            clockRate = 3579545;
+        if (clockRate > 0) {
+            psg = new SmsApu();
         }
+        //this needs to be set even if there is no psg
+        clockRate = clockRate > 0 ? clockRate : 3579545;
         psgFactor = (int) ((float) psgTimeUnit / vgmRate * clockRate + 0.5);
 
         // FM clock rate
         fm_clock_rate = vgmHeader.getYm2612Clk();
-        fm = null;
-        if (fm_clock_rate != 0)
+        if (fm_clock_rate > 0)
         {
             fm = new YM2612();
             buf.setVolume(0.7);
@@ -87,13 +87,14 @@ public final class VgmEmu extends ClassicEmu {
 
 // private
 
-    static final int vgmRate = 44100;
+    static final int vgmRate = 44100; //hz
+    static final double vgmSamplesPerMs = vgmRate/1000d;
     static final int psgTimeBits = 12;
     static final int psgTimeUnit = 1 << psgTimeBits;
 
 
-    PsgProvider psg = new SmsApu();
-    FmProvider fm;
+    PsgProvider psg = PsgProvider.NO_SOUND;
+    FmProvider fm = FmProvider.NO_SOUND;
     VgmHeader vgmHeader;
     int fm_clock_rate;
     int pos;
@@ -119,8 +120,7 @@ public final class VgmEmu extends ClassicEmu {
         loopFlag = false;
 
         psg.reset();
-        if (fm != null)
-            fm.reset();
+        fm.reset();
     }
 
     private int toPSGTime(int vgmTime)
@@ -161,7 +161,7 @@ public final class VgmEmu extends ClassicEmu {
     protected int runMsec(int msec)
     {
 
-        final int duration = (int) (vgmRate / 100d * msec / 10);
+        final int duration = (int) (vgmSamplesPerMs * msec);
 
         {
             int sampleCount = toFMTime(duration);
@@ -203,41 +203,30 @@ public final class VgmEmu extends ClassicEmu {
                     break;
 
                 case CMD_YM2612_PORT0:
-                    if (fm != null)
-                    {
-                        int port = data[pos++] & 0xFF;
-                        int val = data[pos++] & 0xFF;
-                        if (port == YM2612_DAC_PORT)
-                        {
-                            write_pcm(time, val);
+                    int port = data[pos++] & 0xFF;
+                    int val = data[pos++] & 0xFF;
+                    if (port == YM2612_DAC_PORT) {
+                        write_pcm(time, val);
+                    } else {
+                        if (port == 0x2B) {
+                            dac_disabled = (val >> 7 & 1) - 1;
+                            dac_amp |= dac_disabled;
                         }
-                        else
-                        {
-                            if (port == 0x2B)
-                            {
-                                dac_disabled = (val >> 7 & 1) - 1;
-                                dac_amp |= dac_disabled;
-                            }
-                            runFM(time);
-                            fm.write0(port, val);
-                        }
+                        runFM(time);
+                        fm.write0(port, val);
                     }
                     break;
 
                 case CMD_YM2612_PORT1:
-                    if (fm != null)
-                    {
-                        runFM(time);
-                        int port = data[pos++] & 0xFF;
-                        fm.write1(port, data[pos++] & 0xFF);
-                    }
+                    runFM(time);
+                    int fmPort = data[pos++] & 0xFF;
+                    fm.write1(fmPort, data[pos++] & 0xFF);
                     break;
 
                 case CMD_DELAY:
                     time += (data[pos + 1] & 0xFF) * 0x100 + (data[pos] & 0xFF);
                     pos += 2;
                     break;
-
                 case CMD_DATA_BLOCK:
                     if (data[pos++] != CMD_END)
                         logError();
@@ -270,9 +259,7 @@ public final class VgmEmu extends ClassicEmu {
                     }
             }
         }
-
-        if (fm != null)
-            runFM(duration);
+        runFM(duration);
 
         int endTime = toPSGTime(duration);
         delay = time - duration;
@@ -324,7 +311,8 @@ public final class VgmEmu extends ClassicEmu {
                 pos += diff;
                 break;
             default:
-                System.out.println(String.format("Unexpected command: %s, at position: %s", Integer.toHexString(cmd), Integer.toHexString(pos)));
+                System.out.println(String.format("Unexpected command: %s, at position: %s",
+                        Integer.toHexString(cmd), Integer.toHexString(pos)));
                 logError();
                 break;
         }
