@@ -90,7 +90,7 @@ public class VgmHeader {
         v.ident = new String(data, IDENT.getPosition(), IDENT.getSize());
         v.eofOffset = getIntValue(data, EOF_OFFSET);
         v.version = getIntValue(data, VERSION);
-        v.versionString = Integer.toString((v.version >> 8) & 0xFF, 16) + "." + Integer.toString(v.version & 0xFF, 16);
+        v.versionString = toVersionString(v.version);
         v.sn76489Clk = getIntValue(data, SN76489_CLK);
         v.gd3Offset =  getIntValue(data, GD3_OFFSET);
         v.numSamples=  getIntValue(data, NUM_SAMPLES);
@@ -108,6 +108,13 @@ public class VgmHeader {
         v.dataOffset=  getIntValue(data, DATA_OFFSET);
         v.dataOffset = v.dataOffset == 0 ? DEFAULT_DATA_OFFSET : v.dataOffset + DATA_OFFSET.getPosition();
         return v;
+    }
+
+    private static String toVersionString(int version){
+        String major = Integer.toString((version >> 8) & 0xFF, 16);
+        int minorVal = version & 0xFF;
+        String minor = (minorVal < 10 ? "0" : "" ) + Integer.toString(minorVal, 16);
+        return major + "." + minor;
     }
 
     private static int getIntValue(byte[] data, Field field){
