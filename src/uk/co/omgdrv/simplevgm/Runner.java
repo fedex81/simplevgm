@@ -20,8 +20,8 @@ import java.util.stream.Collectors;
 public class Runner {
 
     private static boolean DISABLE_PSG = false;
-    private static String VGM_FOLDER = "."; //"vgm";
-    private static String VGM_FILE = "file.vgm";
+    private static String VGM_FOLDER = null; //"."; //"vgm";
+    private static String VGM_FILE = null;
 
     private static Predicate<Path> vgmFilesPredicate = p ->
             p.toString().endsWith(".vgm") || p.toString().endsWith(".vgz");
@@ -43,11 +43,21 @@ public class Runner {
     }
 
     private static Path getPathToPlay(String[] args){
-        Path p = Paths.get(".");
+        String s = VGM_FILE != null ? VGM_FILE : (VGM_FOLDER != null ? VGM_FOLDER : ".");
+        Path p = Paths.get(s);
         if(args.length > 0){
              p = Paths.get(args[0]);
         }
         return p;
+    }
+
+    public static List<Path> getRecursiveVgmFiles(Path folder) throws IOException {
+        Set<Path> fileSet = new HashSet<>();
+        Files.walkFileTree(folder, createFileVisitor(fileSet));
+        List<Path> list = new ArrayList<>(fileSet);
+        Collections.shuffle(list);
+        System.out.println("VGM files found: " + fileSet.size());
+        return list;
     }
 
     private void playAll(VGMPlayer v, String folderName) throws Exception {
@@ -57,12 +67,7 @@ public class Runner {
     }
 
     private void playRecursive(VGMPlayer v, Path folder) throws Exception {
-        Set<Path> fileSet = new HashSet<>();
-        Files.walkFileTree(folder, createFileVisitor(fileSet));
-        List<Path> list = new ArrayList<>(fileSet);
-        Collections.shuffle(list);
-        System.out.println("VGM files found: " + fileSet.size());
-        list.stream().forEach(f -> playOne(v, f));
+        getRecursiveVgmFiles(folder).stream().forEach(f -> playOne(v, f));
     }
 
     private void playOne(VGMPlayer v, Path file) {

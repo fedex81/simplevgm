@@ -79,6 +79,9 @@ public final class VgmEmu extends ClassicEmu {
         psg.setOutput(buf.center(), buf.left(), buf.right());
         pos = vgmHeader.getDataOffset();
 
+        String loopMsg = String.format("NumSamples: %d, loopSamplesLength %d", vgmHeader.getNumSamples(), vgmHeader.getLoopSamples());
+//        System.out.println(loopMsg);
+
         return 1;
     }
 
@@ -152,13 +155,18 @@ public final class VgmEmu extends ClassicEmu {
             dac_amp |= dac_disabled;
     }
 
+    private static boolean endlessLoopFlag = false;
+    private long sampleCounter = 0;
+
     protected int runMsec(int msec)
     {
-        final int duration = vgmRate / 100 * msec / 10;
+
+        final int duration = (int) (vgmRate / 100d * msec / 10);
 
         {
             int sampleCount = toFMTime(duration);
             java.util.Arrays.fill(fm_buf_lr, 0, sampleCount * 2, 0);
+            sampleCounter += sampleCount;
         }
         fm_pos = 0;
 
@@ -172,9 +180,12 @@ public final class VgmEmu extends ClassicEmu {
             switch (cmd)
             {
                 case CMD_END:
-                    endOfStream = true;
+                    //TODO fix sample counting
+//                    System.out.println("End command after samples: " + sampleCounter);
+                    boolean loopDone = sampleCounter >= vgmHeader.getNumSamples() + vgmHeader.getLoopSamples();
+                    endOfStream = !endlessLoopFlag && loopDone;
+                    pos = loopDone ? vgmHeader.getDataOffset() : vgmHeader.getLoopOffset();
                     break;
-
                 case CMD_DELAY_735:
                     time += 735;
                     break;

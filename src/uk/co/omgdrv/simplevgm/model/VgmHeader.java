@@ -2,7 +2,10 @@ package uk.co.omgdrv.simplevgm.model;
 
 import uk.co.omgdrv.simplevgm.util.Util;
 
-import java.util.Arrays;
+
+import java.util.Objects;
+
+import static uk.co.omgdrv.simplevgm.model.VgmHeader.Field.*;
 
 /**
  * ${FILE}
@@ -15,86 +18,103 @@ public class VgmHeader {
 
     public static final String VGM_MAGIC_WORD = "Vgm ";
     public static final int VGM_VERSION = 0x150;
+    public static final int DEFAULT_DATA_OFFSET = 0x40;
 
-    String ident;
-    int eofOffset;
-    int version;
-    int dataOffset;
-    int loopOffset;
+    enum Field {
+        IDENT(0),
+        EOF_OFFSET(4),
+        VERSION(8),
+        SN76489_CLK(12),
+        YM2413_CLK(16),
+        GD3_OFFSET(20),
+        NUM_SAMPLES(24),
+        LOOP_OFFSET(28),
+        LOOP_SAMPLES(32),
+        RATE(36),
+        SN76489_FB(40, 2),
+        SN76489_SHIFT(42, 1),
+        SN76489_FLAGS(43, 1),
+        YM2612_CLK(44),
+        DATA_OFFSET(52),
+        ;
 
-    int sn76489Clk;
-    int ym2612Clk;
+        private int position;
+        private int size;
 
-    int rate;
+        Field(int pos){
+            this(pos, 4); //4bytes
+        }
 
-    byte[] ym2413_clk = new byte[4];
-    byte[] gd3_offset = new byte[4];
-    byte[] num_samples = new byte[4];
+        Field(int pos, int size){
+            this.position = pos;
+            this.size = size;
+        }
 
-    byte[] loop_samples = new byte[4];
+        public int getPosition() {
+            return position;
+        }
 
-    byte[] sn76489_fb = new byte[2];
-    byte[] sn76489_shift = new byte[1];
-    byte[] sn76489_flags = new byte[1];
+        public int getSize() {
+            return size;
+        }
+    }
 
-    byte[] ym2151_clk = new byte[4];
-    byte[] sega_pcm_clk = new byte[4];
-    byte[] sega_pcm_reg = new byte[4];
+    private String ident;
+    private String versionString;
+
+    private int eofOffset;
+    private int version;
+    private int dataOffset;
+
+    private int loopOffset;
+    private int loopSamples;
+
+    private int sn76489Clk;
+    private int ym2612Clk;
+
+    private int rate;
+
+    private int gd3Offset;
+    private int numSamples;
+
+    private int sn76489Fb;
+    private int sn76489Shift;
+    private int sn76489Flags;
+
 
     private VgmHeader() {
     }
 
     public static VgmHeader loadHeader(byte[] data) {
         VgmHeader v = new VgmHeader();
-        int index = 0;
-        v.ident = new String(data, index, 4);
-        index += 4;
-        v.eofOffset = Util.getUInt32LE(data[index], data[index + 1], data[index + 2], data[index + 3]);
-        index += 4;
-        v.version = Util.getUInt32LE(data[index], data[index + 1], data[index + 2], data[index + 3]);
-        index += 4;
-
-        v.sn76489Clk = Util.getUInt32LE(data[index], data[index + 1], data[index + 2], data[index + 3]);
-        index += 4;
-
-        v.ym2413_clk = Arrays.copyOfRange(data, index, index + v.ym2413_clk.length);
-        index += v.ym2413_clk.length;
-
-        v.gd3_offset = Arrays.copyOfRange(data, index, index + v.gd3_offset.length);
-        index += v.gd3_offset.length;
-
-        v.num_samples = Arrays.copyOfRange(data, index, index + v.num_samples.length);
-        index += v.num_samples.length;
-
-        v.loopOffset = Util.getUInt32LE(data[index], data[index + 1], data[index + 2], data[index + 3]);
-        v.loopOffset = v.loopOffset == 0 ? 0 : v.loopOffset + 0x1C;
-        index += 4;
-
-        v.loop_samples = Arrays.copyOfRange(data, index, index + v.loop_samples.length);
-        index += v.loop_samples.length;
-        v.rate = Util.getUInt32LE(data[index], data[index + 1], data[index + 2], data[index + 3]);
-        index += 4;
-        v.sn76489_fb = Arrays.copyOfRange(data, index, index + v.sn76489_fb.length);
-        index += v.sn76489_fb.length;
-        v.sn76489_shift = Arrays.copyOfRange(data, index, index + v.sn76489_shift.length);
-        index += v.sn76489_shift.length;
-        v.sn76489_flags = Arrays.copyOfRange(data, index, index + v.sn76489_flags.length);
-        index += v.sn76489_flags.length;
-
-        v.ym2612Clk = Util.getUInt32LE(data[index], data[index + 1], data[index + 2], data[index + 3]);
-        index += 4;
-
-        v.ym2151_clk = Arrays.copyOfRange(data, index, index + v.ym2151_clk.length);
-        index += v.ym2151_clk.length;
-
-        v.dataOffset = Util.getUInt32LE(data[index], data[index + 1], data[index + 2], data[index + 3]);
-        v.dataOffset = v.dataOffset == 0 ? 0x40 : v.dataOffset + 0x34;
-        index += 4;
-
-        v.sega_pcm_clk = Arrays.copyOfRange(data, index, index + v.sega_pcm_clk.length);
-        index += v.sega_pcm_clk.length;
-        v.sega_pcm_reg = Arrays.copyOfRange(data, index, index + v.sega_pcm_reg.length);
+        v.ident = new String(data, IDENT.getPosition(), IDENT.getSize());
+        v.eofOffset = getIntValue(data, EOF_OFFSET);
+        v.version = getIntValue(data, VERSION);
+        v.versionString = Integer.toString((v.version >> 8) & 0xFF, 16) + "." + Integer.toString(v.version & 0xFF, 16);
+        v.sn76489Clk = getIntValue(data, SN76489_CLK);
+        v.gd3Offset =  getIntValue(data, GD3_OFFSET);
+        v.numSamples=  getIntValue(data, NUM_SAMPLES);
+        v.loopOffset=  getIntValue(data, LOOP_OFFSET);
+        v.loopOffset = v.loopOffset == 0 ? 0 : v.loopOffset + LOOP_OFFSET.getPosition();
+        v.loopSamples=  getIntValue(data, LOOP_SAMPLES);
+        v.rate=  getIntValue(data, RATE);
+        v.sn76489Fb = Util.getUInt32LE(data[SN76489_FB.getPosition()], data[SN76489_FB.getPosition() + 1]);
+        v.sn76489Shift = Util.getUInt32LE(data[SN76489_SHIFT.getPosition()]);
+        v.sn76489Flags = Util.getUInt32LE(data[SN76489_FLAGS.getPosition()]);
+        v.ym2612Clk=  getIntValue(data, YM2612_CLK);
+        if(v.ym2612Clk == 0 && v.version <= 0x101){
+            v.ym2612Clk=  getIntValue(data, YM2413_CLK);
+        }
+        v.dataOffset=  getIntValue(data, DATA_OFFSET);
+        v.dataOffset = v.dataOffset == 0 ? DEFAULT_DATA_OFFSET : v.dataOffset + DATA_OFFSET.getPosition();
         return v;
+    }
+
+    private static int getIntValue(byte[] data, Field field){
+        if(field.size == 4) {
+            return  Util.getUInt32LE(data, field.getPosition());
+        }
+        return -1;
     }
 
     public String getVersionString() {
@@ -131,5 +151,78 @@ public class VgmHeader {
 
     public int getRate() {
         return rate;
+    }
+
+    public int getLoopSamples() {
+        return loopSamples;
+    }
+
+    public int getGd3Offset() {
+        return gd3Offset;
+    }
+
+
+    public int getNumSamples() {
+        return numSamples;
+    }
+
+    public int getSn76489Fb() {
+        return sn76489Fb;
+    }
+
+    public int getSn76489Flags() {
+        return sn76489Flags;
+    }
+
+    public int getSn76489Shift() {
+        return sn76489Shift;
+    }
+
+    @Override
+    public String toString() {
+        return "VgmHeader{" +
+                "ident='" + ident + '\'' +
+                ", eofOffset=" + eofOffset +
+                ", version=" + versionString +
+                ", dataOffset=" + dataOffset +
+                ", loopOffset=" + loopOffset +
+                ", loopSamples=" + loopSamples +
+                ", sn76489Clk=" + sn76489Clk +
+                ", ym2612Clk=" + ym2612Clk +
+                ", rate=" + rate +
+                ", gd3Offset=" + gd3Offset +
+                ", numSamples=" + numSamples +
+                ", sn76489Fb=" + sn76489Fb +
+                ", sn76489Shift=" + sn76489Shift +
+                ", sn76489Flags=" + sn76489Flags +
+                '}';
+    }
+
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        VgmHeader vgmHeader = (VgmHeader) o;
+        return eofOffset == vgmHeader.eofOffset &&
+                version == vgmHeader.version &&
+                dataOffset == vgmHeader.dataOffset &&
+                loopOffset == vgmHeader.loopOffset &&
+                loopSamples == vgmHeader.loopSamples &&
+                sn76489Clk == vgmHeader.sn76489Clk &&
+                ym2612Clk == vgmHeader.ym2612Clk &&
+                rate == vgmHeader.rate &&
+                gd3Offset == vgmHeader.gd3Offset &&
+                numSamples == vgmHeader.numSamples &&
+                sn76489Fb == vgmHeader.sn76489Fb &&
+                sn76489Shift == vgmHeader.sn76489Shift &&
+                sn76489Flags == vgmHeader.sn76489Flags &&
+                Objects.equals(ident, vgmHeader.ident) &&
+                Objects.equals(versionString, vgmHeader.versionString);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(ident, versionString, eofOffset, version, dataOffset, loopOffset, loopSamples, sn76489Clk, ym2612Clk, rate, gd3Offset, numSamples, sn76489Fb, sn76489Shift, sn76489Flags);
     }
 }

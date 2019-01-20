@@ -146,8 +146,7 @@ public class MusicEmu
         if (!trackEnded_)
         {
             trackEnded_ = true;
-            System.out.println("Unexpected error");
-            new Exception().printStackTrace();
+            new Exception("Unexpected error - stack trace").printStackTrace();
         }
     }
 
