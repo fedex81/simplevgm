@@ -9,7 +9,7 @@ import uk.co.omgdrv.simplevgm.util.BlipBuffer;
  * <p>
  * Copyright 2019
  */
-public interface PsgProvider {
+public interface VgmPsgProvider {
 
     void writeData(int time, int data);
 
@@ -21,7 +21,7 @@ public interface PsgProvider {
 
     void endFrame(int endTime);
 
-    PsgProvider NO_SOUND = new PsgProvider() {
+    VgmPsgProvider NO_SOUND = new VgmPsgProvider() {
         @Override
         public void writeData(int time, int data) {
 

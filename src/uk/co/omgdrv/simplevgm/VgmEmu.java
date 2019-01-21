@@ -15,9 +15,9 @@ License along with this module; if not, write to the Free Software Foundation,
 Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA */
 
 import uk.co.omgdrv.simplevgm.fm.YM2612;
-import uk.co.omgdrv.simplevgm.model.FmProvider;
-import uk.co.omgdrv.simplevgm.model.PsgProvider;
+import uk.co.omgdrv.simplevgm.model.VgmFmProvider;
 import uk.co.omgdrv.simplevgm.model.VgmHeader;
+import uk.co.omgdrv.simplevgm.model.VgmPsgProvider;
 import uk.co.omgdrv.simplevgm.psg.SmsApu;
 import uk.co.omgdrv.simplevgm.util.Util;
 
@@ -26,10 +26,13 @@ import static uk.co.omgdrv.simplevgm.model.VgmDataFormat.*;
 public final class VgmEmu extends ClassicEmu {
 
 
-    public static VgmEmu createInstance(PsgProvider apu){
+    public static VgmEmu createInstance(VgmPsgProvider apu, VgmFmProvider fm) {
         VgmEmu emu = new VgmEmu();
         if(apu != null) {
             emu.psg = apu;
+        }
+        if (fm != null) {
+            emu.fm = fm;
         }
         return emu;
     }
@@ -56,7 +59,7 @@ public final class VgmEmu extends ClassicEmu {
         // PSG clock rate
         int clockRate = vgmHeader.getSn76489Clk();
         if (clockRate > 0) {
-            psg = new SmsApu();
+            psg = psg == VgmPsgProvider.NO_SOUND ? new SmsApu() : psg;
         }
         //this needs to be set even if there is no psg
         clockRate = clockRate > 0 ? clockRate : 3579545;
@@ -66,7 +69,7 @@ public final class VgmEmu extends ClassicEmu {
         fm_clock_rate = vgmHeader.getYm2612Clk();
         if (fm_clock_rate > 0)
         {
-            fm = new YM2612();
+            fm = fm == VgmFmProvider.NO_SOUND ? new YM2612() : fm;
             buf.setVolume(0.7);
             fm.init(fm_clock_rate, sampleRate());
         }
@@ -85,6 +88,7 @@ public final class VgmEmu extends ClassicEmu {
         return 1;
     }
 
+
 // private
 
     static final int vgmRate = 44100; //hz
@@ -93,8 +97,8 @@ public final class VgmEmu extends ClassicEmu {
     static final int psgTimeUnit = 1 << psgTimeBits;
 
 
-    PsgProvider psg = PsgProvider.NO_SOUND;
-    FmProvider fm = FmProvider.NO_SOUND;
+    VgmPsgProvider psg = VgmPsgProvider.NO_SOUND;
+    VgmFmProvider fm = VgmFmProvider.NO_SOUND;
     VgmHeader vgmHeader;
     int fm_clock_rate;
     int pos;
@@ -321,9 +325,6 @@ public final class VgmEmu extends ClassicEmu {
 
     protected void mixSamples(byte[] out, int out_off, int count)
     {
-        if (fm == null)
-            return;
-
         out_off *= 2;
         int in_off = fm_pos;
 

@@ -1,6 +1,5 @@
 package uk.co.omgdrv.simplevgm;
 
-import uk.co.omgdrv.simplevgm.model.PsgProvider;
 import uk.co.omgdrv.simplevgm.util.Util;
 
 import java.io.IOException;
@@ -26,19 +25,17 @@ public class Runner {
     private static Predicate<Path> vgmFilesPredicate = p ->
             p.toString().endsWith(".vgm") || p.toString().endsWith(".vgz");
 
-
     public static void main(String[] args) throws Exception {
         Path path = getPathToPlay(args);
         boolean isFolder = path.toFile().isDirectory();
         System.out.println(String.format("Playing %s: %s",
                 (isFolder ? "folder" : "file"), path.toAbsolutePath().toString()));
-        PsgProvider psgProvider = DISABLE_PSG ? PsgProvider.NO_SOUND : null;
-        VGMPlayer v = VGMPlayer.createInstance(psgProvider, 44100);
+        VGMPlayer v = VGMPlayer.createInstance(44100);
         Runner r = new Runner();
         if(isFolder){
-            r.playRecursive(v, path);
+            playRecursive(v, path);
         } else {
-            r.playOne(v, path);
+            playOne(v, path);
         }
     }
 
@@ -66,11 +63,11 @@ public class Runner {
         files.stream().forEach(f -> playOne(v, f));
     }
 
-    private void playRecursive(VGMPlayer v, Path folder) throws Exception {
+    public static void playRecursive(VGMPlayer v, Path folder) throws Exception {
         getRecursiveVgmFiles(folder).stream().forEach(f -> playOne(v, f));
     }
 
-    private void playOne(VGMPlayer v, Path file) {
+    private static void playOne(VGMPlayer v, Path file) {
         try {
             System.out.println("Playing: " + file.toAbsolutePath().toString());
             v.loadFile(file.toAbsolutePath().toString());
@@ -82,7 +79,7 @@ public class Runner {
         }
     }
 
-    private void waitForCompletion(VGMPlayer v){
+    private static void waitForCompletion(VGMPlayer v) {
         do {
             Util.sleep(1000);
         } while (v.isPlaying());

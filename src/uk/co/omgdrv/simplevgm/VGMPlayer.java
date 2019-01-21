@@ -14,7 +14,8 @@ for the same URL is eliminated. This allows a web page to switch between
 several tracks in a ZIP archive or of a multi-track music file, without
 having to keep track of whether the file was already loaded. */
 
-import uk.co.omgdrv.simplevgm.model.PsgProvider;
+import uk.co.omgdrv.simplevgm.model.VgmFmProvider;
+import uk.co.omgdrv.simplevgm.model.VgmPsgProvider;
 import uk.co.omgdrv.simplevgm.util.Util;
 
 /* Copyright (C) 2007-2008 Shay Green. This module is free software; you
@@ -31,15 +32,17 @@ Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA */
 public class VGMPlayer extends EmuPlayer
 {
     int sampleRate;
-    PsgProvider smsApu;
+    VgmPsgProvider psgProvider;
+    VgmFmProvider fmProvider;
 
     public static VGMPlayer createInstance(int sampleRate){
-        return createInstance(null, sampleRate);
+        return createInstance(null, null, sampleRate);
     }
 
-    public static VGMPlayer createInstance(PsgProvider smsApu, int sampleRate){
+    public static VGMPlayer createInstance(VgmPsgProvider psgProvider, VgmFmProvider fmProvider, int sampleRate) {
         VGMPlayer v = new VGMPlayer(sampleRate);
-        v.smsApu = smsApu;
+        v.psgProvider = psgProvider;
+        v.fmProvider = fmProvider;
         return v;
     }
 
@@ -101,7 +104,7 @@ public class VGMPlayer extends EmuPlayer
     MusicEmu createEmu(String name)
     {
         if (name.endsWith(".VGM") || name.endsWith(".VGZ"))
-            return VgmEmu.createInstance(smsApu);
+            return VgmEmu.createInstance(psgProvider, fmProvider);
         return null;
     }
 }

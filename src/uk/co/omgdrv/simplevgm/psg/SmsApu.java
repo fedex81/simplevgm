@@ -12,10 +12,10 @@ details. You should have received a copy of the GNU Lesser General Public
 License along with this module; if not, write to the Free Software Foundation,
 Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA */
 
+import uk.co.omgdrv.simplevgm.model.VgmPsgProvider;
 import uk.co.omgdrv.simplevgm.util.BlipBuffer;
-import uk.co.omgdrv.simplevgm.model.PsgProvider;
 
-public final class SmsApu implements PsgProvider
+public final class SmsApu implements VgmPsgProvider
 {
     int lastTime;
     int latch;

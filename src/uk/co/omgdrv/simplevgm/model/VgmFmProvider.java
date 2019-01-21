@@ -7,11 +7,11 @@ package uk.co.omgdrv.simplevgm.model;
  * <p>
  * Copyright 2019
  */
-public interface FmProvider {
+public interface VgmFmProvider {
 
     int reset();
 
-    int init(int Clock, int Rate);
+    int init(int clock, int rate);
 
     void update(int[] buf_lr, int offset, int end);
 
@@ -19,7 +19,7 @@ public interface FmProvider {
 
     void write1(int addr, int data);
 
-    FmProvider NO_SOUND = new FmProvider() {
+    VgmFmProvider NO_SOUND = new VgmFmProvider() {
         @Override
         public int reset() {
             return 0;

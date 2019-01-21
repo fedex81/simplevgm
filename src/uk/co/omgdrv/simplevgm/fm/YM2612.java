@@ -1,12 +1,12 @@
 package uk.co.omgdrv.simplevgm.fm;
 
-import uk.co.omgdrv.simplevgm.model.FmProvider;
+import uk.co.omgdrv.simplevgm.model.VgmFmProvider;
 
 /**
  * Test port of Gens YM2612 core.
  * Stephan Dittrich, 2005
  */
-public final class YM2612 implements FmProvider
+public final class YM2612 implements VgmFmProvider
 {
     static final int NULL_RATE_SIZE = 32;
 
@@ -41,8 +41,6 @@ public final class YM2612 implements FmProvider
         int AMSon;
     }
 
-    ;
-
     private final class cChannel
     {
         final int[] S0_OUT = new int[4];
@@ -65,8 +63,6 @@ public final class YM2612 implements FmProvider
             for (int i = 0; i < 4; i++) SLOT[i] = new cSlot();
         }
     }
-
-    ;
 
     private final class cYM2612
     {
@@ -95,8 +91,6 @@ public final class YM2612 implements FmProvider
             for (int i = 0; i < 6; i++) CHANNEL[i] = new cChannel();
         }
     }
-
-    ;
 
     // Constants ( taken from MAME YM2612 core )
     private static final int UPD_SIZE = 4000;
@@ -309,7 +303,7 @@ public final class YM2612 implements FmProvider
 
             j = (int) (x / ENV_STEP);             // Get TL range
 
-            if (j > PG_CUT_OFF) j = (int) PG_CUT_OFF;
+            if (j > PG_CUT_OFF) j = PG_CUT_OFF;
 
             SIN_TAB[i] = j;
             SIN_TAB[(SINLEN / 2) - i] = j;
@@ -669,7 +663,7 @@ public final class YM2612 implements FmProvider
     private final void calc_FINC_CH(cChannel CH)
     {
         int finc, kc;
-        finc = (int) (FINC_TAB[CH.FNUM[0]] >> (7 - CH.FOCT[0]));
+        finc = FINC_TAB[CH.FNUM[0]] >> (7 - CH.FOCT[0]);
         kc = CH.KC[0];
         calc_FINC_SL(CH.SLOT[0], finc, kc);
         calc_FINC_SL(CH.SLOT[1], finc, kc);
@@ -814,7 +808,7 @@ public final class YM2612 implements FmProvider
             case 0xA4:
                 if ((address & 0x100) != 0) num += 3;
                 CH = YM2612_CHANNEL[num];
-                CH.FNUM[0] = (CH.FNUM[0] & 0x0FF) + ((int) (data & 0x07) << 8);
+                CH.FNUM[0] = (CH.FNUM[0] & 0x0FF) + ((data & 0x07) << 8);
                 CH.FOCT[0] = (data & 0x38) >> 3;
                 CH.KC[0] = (CH.FOCT[0] << 2) | FKEY_TAB[CH.FNUM[0] >> 7];
                 CH.SLOT[0].Finc = -1;
@@ -832,7 +826,7 @@ public final class YM2612 implements FmProvider
                 if (address < 0x100)
                 {
                     num++;
-                    YM2612_CHANNEL[2].FNUM[num] = (YM2612_CHANNEL[2].FNUM[num] & 0x0FF) + ((int) (data & 0x07) << 8);
+                    YM2612_CHANNEL[2].FNUM[num] = (YM2612_CHANNEL[2].FNUM[num] & 0x0FF) + ((data & 0x07) << 8);
                     YM2612_CHANNEL[2].FOCT[num] = (data & 0x38) >> 3;
                     YM2612_CHANNEL[2].KC[num] = (YM2612_CHANNEL[2].FOCT[num] << 2) | FKEY_TAB[YM2612_CHANNEL[2].FNUM[num] >> 7];
                     YM2612_CHANNEL[2].SLOT[0].Finc = -1;
@@ -896,7 +890,7 @@ public final class YM2612 implements FmProvider
                 }
                 break;
             case 0x24:
-                YM2612_TimerA = (YM2612_TimerA & 0x003) | (((int) data) << 2);
+                YM2612_TimerA = (YM2612_TimerA & 0x003) | (data << 2);
                 if (YM2612_TimerAL != ((1024 - YM2612_TimerA) << 12))
                 {
                     YM2612_TimerAcnt = YM2612_TimerAL = (1024 - YM2612_TimerA) << 12;

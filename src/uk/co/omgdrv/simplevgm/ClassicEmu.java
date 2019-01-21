@@ -14,25 +14,30 @@ Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA */
 
 import uk.co.omgdrv.simplevgm.util.StereoBuffer;
 
-public class ClassicEmu extends MusicEmu
-{
-    protected int setSampleRate_(int rate)
-    {
+public abstract class ClassicEmu extends MusicEmu {
+
+    static final int bufLength = 32;
+    protected StereoBuffer buf = new StereoBuffer();
+
+    // derived class can override and mix its own samples here
+    protected abstract void mixSamples(byte[] out, int offset, int count);
+
+    // Subclass can also get number of msec to run, and return number of clocks emulated
+    protected abstract int runMsec(int msec);
+
+    protected int setSampleRate_(int rate) {
         buf.setSampleRate(rate, 1000 / bufLength);
         return rate;
     }
 
-    public void startTrack(int track)
-    {
+    public void startTrack(int track) {
         super.startTrack(track);
         buf.clear();
     }
 
-    protected int play_(byte[] out, int count)
-    {
+    protected int play_(byte[] out, int count) {
         int pos = 0;
-        while (true)
-        {
+        while (true) {
             int n = buf.readSamples(out, pos, count);
             mixSamples(out, pos, n);
 
@@ -41,8 +46,7 @@ public class ClassicEmu extends MusicEmu
             if (count <= 0)
                 break;
 
-            if (trackEnded_)
-            {
+            if (trackEnded_) {
                 java.util.Arrays.fill(out, pos, pos + count, (byte) 0);
                 break;
             }
@@ -53,37 +57,11 @@ public class ClassicEmu extends MusicEmu
         return pos;
     }
 
-    protected final int countSamples(int time)
-    {
+    protected final int countSamples(int time) {
         return buf.countSamples(time);
     }
 
-    protected void mixSamples(byte[] out, int offset, int count)
-    {
-        // derived class can override and mix its own samples here
-    }
-
-// internal
-
-    static final int bufLength = 32;
-    protected StereoBuffer buf = new StereoBuffer();
-
-    protected void setClockRate(int rate)
-    {
+    protected void setClockRate(int rate) {
         buf.setClockRate(rate);
-    }
-
-    // Subclass should run here for at most clockCount and return actual
-    // number of clocks emulated (can be less)
-    protected int runClocks(int clockCount)
-    {
-        return 0;
-    }
-
-    // Subclass can also get number of msec to run, and return number of clocks emulated
-    protected int runMsec(int msec)
-    {
-        assert bufLength == 32;
-        return runClocks(buf.clockRate() >> 5);
     }
 }
