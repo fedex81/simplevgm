@@ -25,6 +25,7 @@ import static uk.co.omgdrv.simplevgm.model.VgmDataFormat.*;
 
 public final class VgmEmu extends ClassicEmu {
 
+    public static final int FADE_LENGTH_SEC = 5;
 
     public static VgmEmu createInstance(VgmPsgProvider apu, VgmFmProvider fm) {
         VgmEmu emu = new VgmEmu();
@@ -82,9 +83,6 @@ public final class VgmEmu extends ClassicEmu {
         psg.setOutput(buf.center(), buf.left(), buf.right());
         pos = vgmHeader.getDataOffset();
 
-        String loopMsg = String.format("NumSamples: %d, loopSamplesLength %d", vgmHeader.getNumSamples(), vgmHeader.getLoopSamples());
-//        System.out.println(loopMsg);
-
         return 1;
     }
 
@@ -116,7 +114,7 @@ public final class VgmEmu extends ClassicEmu {
     public void startTrack(int track)
     {
         super.startTrack(track);
-
+        setFade();
         delay = 0;
         pcm_data = pos;
         pcm_pos = pos;
@@ -125,6 +123,12 @@ public final class VgmEmu extends ClassicEmu {
 
         psg.reset();
         fm.reset();
+    }
+
+    private void setFade() {
+        int totalSamples = vgmHeader.getNumSamples() + vgmHeader.getLoopSamples();
+        int lengthSec = totalSamples / vgmRate;
+        setFade(lengthSec - FADE_LENGTH_SEC, FADE_LENGTH_SEC);
     }
 
     private int toPSGTime(int vgmTime)
