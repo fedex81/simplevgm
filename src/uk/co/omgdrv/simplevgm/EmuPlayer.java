@@ -113,7 +113,7 @@ public class EmuPlayer implements Runnable
 // private
 
     // Sets music emulator to get samples from
-    void setEmu(MusicEmu emu, int sampleRate) throws Exception
+    void setEmu(VgmEmu emu, int sampleRate) throws Exception
     {
         stop();
         this.emu = emu;
@@ -129,7 +129,7 @@ public class EmuPlayer implements Runnable
     private int sampleRate = 0;
     AudioFormat audioFormat;
     DataLine.Info lineInfo;
-    MusicEmu emu;
+    VgmEmu emu;
     Thread thread;
     volatile boolean playing_;
     SourceDataLine line;

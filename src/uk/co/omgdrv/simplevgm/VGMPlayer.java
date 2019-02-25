@@ -35,12 +35,13 @@ public class VGMPlayer extends EmuPlayer
     VgmPsgProvider psgProvider;
     VgmFmProvider fmProvider;
 
-    public static VGMPlayer createInstance(int sampleRate){
-        return createInstance(null, null, sampleRate);
+
+    public static VGMPlayer createInstance(VgmPsgProvider psgProvider) {
+        return createInstance(psgProvider, null);
     }
 
-    public static VGMPlayer createInstance(VgmPsgProvider psgProvider, VgmFmProvider fmProvider, int sampleRate) {
-        VGMPlayer v = new VGMPlayer(sampleRate);
+    public static VGMPlayer createInstance(VgmPsgProvider psgProvider, VgmFmProvider fmProvider) {
+        VGMPlayer v = new VGMPlayer(VgmEmu.VGM_SAMPLE_RATE_HZ);
         v.psgProvider = psgProvider;
         v.fmProvider = fmProvider;
         return v;
@@ -69,7 +70,7 @@ public class VGMPlayer extends EmuPlayer
             if (name.endsWith(".GZ"))
                 name = name.substring(0, name.length() - 3);
 
-            MusicEmu emu = createEmu(name);
+            VgmEmu emu = createEmu(name);
             if (emu == null)
                 return; // TODO: throw exception?
             int actualSampleRate = emu.setSampleRate(sampleRate);
@@ -101,10 +102,14 @@ public class VGMPlayer extends EmuPlayer
     byte[] archiveData;
 
     // Creates appropriate emulator for given filename
-    MusicEmu createEmu(String name)
+    VgmEmu createEmu(String name)
     {
         if (name.endsWith(".VGM") || name.endsWith(".VGZ"))
             return VgmEmu.createInstance(psgProvider, fmProvider);
         return null;
+    }
+
+    public VgmEmu getEmu() {
+        return emu;
     }
 }

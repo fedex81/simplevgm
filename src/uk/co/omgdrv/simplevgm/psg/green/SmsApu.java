@@ -1,4 +1,4 @@
-package uk.co.omgdrv.simplevgm.psg;// Sega Master System SN76489 PSG sound chip emulator
+package uk.co.omgdrv.simplevgm.psg.green;// Sega Master System SN76489 PSG sound chip emulator
 // http://www.slack.net/~ant/
 
 /* Copyright (C) 2003-2007 Shay Green. This module is free software; you

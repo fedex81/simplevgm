@@ -18,13 +18,15 @@ import uk.co.omgdrv.simplevgm.fm.YM2612;
 import uk.co.omgdrv.simplevgm.model.VgmFmProvider;
 import uk.co.omgdrv.simplevgm.model.VgmHeader;
 import uk.co.omgdrv.simplevgm.model.VgmPsgProvider;
-import uk.co.omgdrv.simplevgm.psg.SmsApu;
+import uk.co.omgdrv.simplevgm.psg.green.SmsApu;
+import uk.co.omgdrv.simplevgm.util.StereoBuffer;
 import uk.co.omgdrv.simplevgm.util.Util;
 
 import static uk.co.omgdrv.simplevgm.model.VgmDataFormat.*;
 
 public final class VgmEmu extends ClassicEmu {
 
+    public static final int VGM_SAMPLE_RATE_HZ = 44100;
     public static final int FADE_LENGTH_SEC = 5;
 
     public static VgmEmu createInstance(VgmPsgProvider apu, VgmFmProvider fm) {
@@ -89,7 +91,7 @@ public final class VgmEmu extends ClassicEmu {
 
 // private
 
-    static final int vgmRate = 44100; //hz
+    static final int vgmRate = VGM_SAMPLE_RATE_HZ;
     static final double vgmSamplesPerMs = vgmRate/1000d;
     static final int psgTimeBits = 12;
     static final int psgTimeUnit = 1 << psgTimeBits;
@@ -102,7 +104,7 @@ public final class VgmEmu extends ClassicEmu {
     int pos;
     byte[] data;
     int delay;
-    int psgFactor;
+    static int psgFactor;
     final int[] fm_buf_lr = new int[48000 / 10 * 2];
     int fm_pos;
     int dac_disabled; // -1 if disabled
@@ -133,6 +135,14 @@ public final class VgmEmu extends ClassicEmu {
 
     private int toPSGTime(int vgmTime)
     {
+        if (psg instanceof SmsApu) {
+            return toPSGTimeGreen(vgmTime);
+        }
+        return vgmTime;
+    }
+
+
+    public static int toPSGTimeGreen(int vgmTime) {
         return (vgmTime * psgFactor + psgTimeUnit / 2) >> psgTimeBits;
     }
 
@@ -324,6 +334,10 @@ public final class VgmEmu extends ClassicEmu {
                 logError();
                 break;
         }
+    }
+
+    public StereoBuffer getStereoBuffer() {
+        return buf;
     }
 
 

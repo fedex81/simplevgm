@@ -1,4 +1,4 @@
-package uk.co.omgdrv.simplevgm.psg;
+package uk.co.omgdrv.simplevgm.psg.green;
 
 import uk.co.omgdrv.simplevgm.util.BlipBuffer;
 

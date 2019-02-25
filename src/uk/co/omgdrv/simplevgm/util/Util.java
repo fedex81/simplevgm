@@ -1,8 +1,17 @@
 package uk.co.omgdrv.simplevgm.util;
 
 
+import javax.sound.sampled.AudioFileFormat;
+import javax.sound.sampled.AudioFormat;
+import javax.sound.sampled.AudioInputStream;
+import javax.sound.sampled.AudioSystem;
+import java.io.File;
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.function.Predicate;
 
 /**
@@ -129,5 +138,31 @@ public class Util {
             s = "0" + s;
         }
         return s;
+    }
+
+
+    public static void writeToFile(Path file, byte[] buffer) {
+        try {
+            Files.write(file, buffer, StandardOpenOption.CREATE, StandardOpenOption.APPEND);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void convertToWav(String fileName, AudioFormat audioFormat) {
+        File input = new File(fileName);
+        File output = new File(fileName + ".wav");
+
+        try {
+            FileInputStream fileInputStream = new FileInputStream(input);
+            AudioInputStream audioInputStream = new AudioInputStream(fileInputStream, audioFormat
+                    , input.length());
+            AudioSystem.write(audioInputStream, AudioFileFormat.Type.WAVE, output);
+            audioInputStream.close();
+            System.out.println(fileName + ".wav recorded");
+        } catch (IOException ioe) {
+            ioe.printStackTrace();
+            System.out.println("Error writing WAV file");
+        }
     }
 }
