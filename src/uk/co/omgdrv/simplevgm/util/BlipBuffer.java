@@ -91,7 +91,8 @@ public final class BlipBuffer
     public void addDelta(int time, int delta)
     {
         final int[] buf = this.buf;
-        final int phase = (time = time * factor + offset) >>
+        time = time * factor + offset;
+        final int phase = (time) >>
                 (timeBits - phaseBits) & (phaseCount - 1);
 
         if (muchFaster)
@@ -152,31 +153,57 @@ public final class BlipBuffer
 
     // Reads at most count samples into out at offset pos*2 (2 bytes per sample)
     // and returns number of samples actually read.
-    public int readSamples(byte[] out, int pos, int count)
-    {
+    public int readSamples(byte[] out, int pos, int count) {
         final int avail = samplesAvail();
         if (count > avail)
             count = avail;
 
-        if (count > 0)
-        {
+        if (count > 0) {
             // Integrate
             final int[] buf = this.buf;
             int accum = this.accum;
             pos <<= 1;
             int i = 0;
-            do
-            {
+            do {
                 int s = (accum += buf[i] - (accum >> 9)) >> 15;
 
                 // clamp to 16 bits
                 if ((short) s != s)
                     s = (s >> 24) ^ 0x7FFF;
 
+                System.out.println(s);
                 // write as little-endian
                 out[pos] = (byte) (s >> 8);
                 out[pos + 1] = (byte) s;
                 pos += 2;
+            }
+            while (++i < count);
+            this.accum = accum;
+
+            removeSamples(count);
+        }
+        return count;
+    }
+
+    public int readSamples8bit(byte[] out, int pos, int count) {
+        final int avail = samplesAvail();
+        if (count > avail)
+            count = avail;
+
+        if (count > 0) {
+            // Integrate
+            final int[] buf = this.buf;
+            int accum = this.accum;
+            pos <<= 1;
+            int i = 0;
+            do {
+                int s = (accum += buf[i] - (accum >> 9)) >> 15;
+                byte val = (byte) s;
+                if (val != s) {
+                    val = s > Byte.MAX_VALUE ? Byte.MAX_VALUE : (byte) (s < Byte.MIN_VALUE ? Byte.MIN_VALUE : s);
+//                    System.out.println(s + "->" + val);
+                }
+                out[pos++] = val;
             }
             while (++i < count);
             this.accum = accum;

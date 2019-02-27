@@ -5,6 +5,8 @@ import uk.co.omgdrv.simplevgm.model.VgmPsgProvider;
 import uk.co.omgdrv.simplevgm.psg.PsgCompare;
 import uk.co.omgdrv.simplevgm.util.BlipBuffer;
 
+import java.util.stream.IntStream;
+
 /**
  * ${FILE}
  * <p>
@@ -15,27 +17,28 @@ import uk.co.omgdrv.simplevgm.util.BlipBuffer;
  * https://forums.nesdev.com/viewtopic.php?f=23&t=15562
  */
 public class NukedPsgProvider implements VgmPsgProvider {
-    public static final int PSG_MAX_VOLUME = 0x40;
+
+    public static final int PSG_MAX_VOLUME = 0x80;
     public static int CLOCK_HZ = 3579545;
-    public static int NUKED_CLOCK_HZ = CLOCK_HZ / 16;
+    public static int NUKED_PSG_SAMPLING_HZ = CLOCK_HZ / 16;
 
     private static final double NANOS_TO_SEC = 1_000_000_000;
-    private static final double NANOS_PER_SAMPLE = NANOS_TO_SEC / VgmEmu.VGM_SAMPLE_RATE_HZ; //22675 ns
-    private static final double NANOS_PER_CYCLE = NANOS_TO_SEC / NUKED_CLOCK_HZ / 2; // div2 //TODO Why
+    private static final double NANOS_PER_SAMPLE = NANOS_TO_SEC / NUKED_PSG_SAMPLING_HZ;
+    private static final double NANOS_PER_CYCLE = NANOS_TO_SEC / CLOCK_HZ;
 
     private PsgYm7101 psg;
     private PsgYm7101.PsgContext context;
 
-    private double[] nukedBufferRaw = new double[VgmEmu.VGM_SAMPLE_RATE_HZ];
-    private double[] nukedBufferDiff = new double[VgmEmu.VGM_SAMPLE_RATE_HZ];
+    private double[] rawBuffer = new double[NUKED_PSG_SAMPLING_HZ];
+    private double[] hpfBuffer = new double[VgmEmu.VGM_SAMPLE_RATE_HZ];
     public byte[] nukedBuffer = new byte[VgmEmu.VGM_SAMPLE_RATE_HZ];
 
     private double nanosToNextSample = NANOS_PER_SAMPLE;
-    private int currentVgmDelayCycle;
+    private int currentCycle;
     private int sampleCounter = 0;
     public int secondsElapsed = 0;
 
-    private PsgCompare psgCompare;
+    protected PsgCompare psgCompare;
 
     public static NukedPsgProvider createInstance() {
         return createInstance(null);
@@ -54,7 +57,8 @@ public class NukedPsgProvider implements VgmPsgProvider {
 
     @Override
     public void writeData(int vgmDelayCycles, int data) {
-        runUntil(vgmDelayCycles);
+        int delayCycles = toPsgClockCycles(vgmDelayCycles);
+        runUntil(delayCycles);
         psg.PSG_Write(context, data);
     }
 
@@ -74,36 +78,41 @@ public class NukedPsgProvider implements VgmPsgProvider {
 
     @Override
     public void endFrame(int vgmDelayCycles) {
-        if (vgmDelayCycles > currentVgmDelayCycle) {
+        long delayCycles = toPsgClockCycles(vgmDelayCycles);
+        if (delayCycles > currentCycle) {
             runUntil(vgmDelayCycles);
         }
-        currentVgmDelayCycle -= vgmDelayCycles;
+        currentCycle -= delayCycles;
     }
 
-    private static long toPsgCycles(long vgmDelayCycles) {
-        return (long) ((vgmDelayCycles * 1.0 / VgmEmu.VGM_SAMPLE_RATE_HZ) * NUKED_CLOCK_HZ);
+    private static int toPsgClockCycles(long vgmDelayCycles) {
+        return (int) ((vgmDelayCycles * 1.0 / VgmEmu.VGM_SAMPLE_RATE_HZ) * CLOCK_HZ);
     }
 
-    private void runUntil(int vgmDelayCycles) {
-        if (vgmDelayCycles > currentVgmDelayCycle) {
-            long delayCycles = toPsgCycles(vgmDelayCycles);
-            while (delayCycles-- > 0) {
+    private void runUntil(int delayCycles) {
+        if (delayCycles > currentCycle) {
+            long count = delayCycles;
+            while (count-- > 0) {
                 psg.PSG_Cycle(context);
                 updateSampleBuffer();
             }
-            currentVgmDelayCycle = vgmDelayCycles;
+            currentCycle = delayCycles;
         }
     }
 
-    private void updateSampleBuffer() {
+    protected double rawSample;
+
+    protected boolean updateSampleBuffer() {
         nanosToNextSample -= NANOS_PER_CYCLE;
+        boolean hasSample = false;
         if (nanosToNextSample < 0) {
+            hasSample = true;
             nanosToNextSample += NANOS_PER_SAMPLE;
-            nukedBufferRaw[sampleCounter] = psg.PSG_GetSample(context); //sample [0;4]
+            rawSample = psg.PSG_GetSample(context);
+            rawBuffer[sampleCounter] = rawSample;
             sampleCounter++;
-            if (sampleCounter == VgmEmu.VGM_SAMPLE_RATE_HZ) {
-                highPassFilter(nukedBufferRaw, nukedBufferDiff);
-                scaleFilter(nukedBufferDiff, nukedBuffer);
+            if (sampleCounter == NUKED_PSG_SAMPLING_HZ) {
+                hpf(rawBuffer);
                 sampleCounter = 0;
                 if (psgCompare != null) {
                     psgCompare.pushData(PsgCompare.PsgType.NUKED, nukedBuffer);
@@ -111,24 +120,31 @@ public class NukedPsgProvider implements VgmPsgProvider {
                 secondsElapsed++;
             }
         }
+        return hasSample;
     }
 
-    private void highPassFilter(double[] input, double[] output) {
-        output[0] = input[0];
-        for (int i = 1; i < input.length - 1; i++) {
-            double change = (input[i + 1] - input[i]);
-            if (Math.abs(change) < 0.05) {
-                output[i] = output[i - 1];
-            } else {
-                output[i] = change > 1 ? change : (change < -1 ? -1 : change);
+    private static int SAMPLE_RATIO = NUKED_PSG_SAMPLING_HZ / VgmEmu.VGM_SAMPLE_RATE_HZ;
+    private static double TOTAL_SAMPLES_WITH_RATIO = NUKED_PSG_SAMPLING_HZ / SAMPLE_RATIO;
+    private static int EXTRA_SAMPLE_POS = (int) Math.ceil(1 / ((TOTAL_SAMPLES_WITH_RATIO / VgmEmu.VGM_SAMPLE_RATE_HZ) - 1));
+
+    private void hpf(double[] rawBuffer) {
+        int k = 0, l = 0;
+        for (int i = SAMPLE_RATIO; i < rawBuffer.length - 1; i += SAMPLE_RATIO) {
+            if (l % EXTRA_SAMPLE_POS == 0) {
+                l++;
+                continue;
             }
+            hpfBuffer[k] = rawBuffer[i + 3] - rawBuffer[i - 2];
+            nukedBuffer[k++] = scaleSample(hpfBuffer[k]);
+            l++;
+//            System.out.println(nukedBuffer[k - 1]);
         }
-        output[nukedBufferRaw.length - 1] = output[nukedBufferRaw.length - 2];
+        byte lastVal = nukedBuffer[k - 1];
+        IntStream.range(k, nukedBuffer.length).forEach(i -> nukedBuffer[i] = lastVal);
     }
 
-    private void scaleFilter(double[] input, byte[] output) {
-        for (int i = 0; i < input.length; i++) {
-            output[i] = (byte) Math.round(input[i] * PSG_MAX_VOLUME);
-        }
+    public static byte scaleSample(double val) {
+        int res = (int) Math.round(val * PSG_MAX_VOLUME);
+        return res > Byte.MAX_VALUE ? Byte.MAX_VALUE : (byte) (res < Byte.MIN_VALUE ? Byte.MIN_VALUE : res);
     }
 }
