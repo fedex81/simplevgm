@@ -119,7 +119,8 @@ public class PsgCompare implements VgmPsgProvider {
 
     public static void main(String[] args) {
         try {
-            List<Path> files = Files.list(Paths.get(".")).filter(f -> f.toString().endsWith(".raw")).collect(Collectors.toList());
+            List<Path> files = Files.list(Paths.get(".")).
+                    filter(f -> f.toString().endsWith(".raw")).collect(Collectors.toList());
             files.stream().forEach(f -> Util.convertToWav(f.getFileName().toString(), audioFormat));
         } catch (Exception e) {
             e.printStackTrace();

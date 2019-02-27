@@ -165,13 +165,13 @@ public final class BlipBuffer
             pos <<= 1;
             int i = 0;
             do {
-                int s = (accum += buf[i] - (accum >> 9)) >> 15;
+                accum += buf[i] - (accum >> 9);
+                int s = accum >> 15;
 
                 // clamp to 16 bits
                 if ((short) s != s)
                     s = (s >> 24) ^ 0x7FFF;
 
-                System.out.println(s);
                 // write as little-endian
                 out[pos] = (byte) (s >> 8);
                 out[pos + 1] = (byte) s;
@@ -197,7 +197,8 @@ public final class BlipBuffer
             pos <<= 1;
             int i = 0;
             do {
-                int s = (accum += buf[i] - (accum >> 9)) >> 15;
+                accum += buf[i] - (accum >> 9);
+                int s = accum >> 15;
                 byte val = (byte) s;
                 if (val != s) {
                     val = s > Byte.MAX_VALUE ? Byte.MAX_VALUE : (byte) (s < Byte.MIN_VALUE ? Byte.MIN_VALUE : s);

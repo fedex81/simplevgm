@@ -22,12 +22,13 @@ public class BlipNukedPsgProvider extends NukedPsgProvider {
     private static int BLIP_FACTOR = CLOCK_HZ / NUKED_PSG_SAMPLING_HZ;
     private static int BLIP_BUFFER_SAMPLES_CLOCKS = (int) (CLOCK_HZ * (BLIP_BUFFER_SAMPLES_MS / 1000d));
     private static int BLIP_BUFFER_SAMPLES_END_FRAME = BLIP_BUFFER_SAMPLES_CLOCKS / BLIP_FACTOR;
+    private static int BLIP_BUFFER_SIZE = VgmEmu.VGM_SAMPLE_RATE_HZ / (1000 / BLIP_BUFFER_SAMPLES_MS);
 
 
     private BlipBuffer blipBuffer;
     private int blipSampleCounter;
-    private byte lastScaledSample;
-    private byte[] bufferSamples = new byte[VgmEmu.VGM_SAMPLE_RATE_HZ * 2]; //TODO size
+    private double lastSample;
+    private byte[] bufferSamples = new byte[BLIP_BUFFER_SIZE];
 
     protected PsgCompare psgCompare;
 
@@ -65,18 +66,18 @@ public class BlipNukedPsgProvider extends NukedPsgProvider {
 
 
     private void updateBlipSampleBuffer(double sample) {
-        byte scaledSample = scaleSample(sample);
+        byte scaledDelta = scaleSample(sample - lastSample);
         int clockRateTime = BLIP_FACTOR * blipSampleCounter;
 //        System.out.println(clockRateTime + "," + (scaledSample -lastScaledSample));
-        blipBuffer.addDelta(clockRateTime, scaledSample - lastScaledSample);
-        lastScaledSample = scaledSample;
+        blipBuffer.addDelta(clockRateTime, scaledDelta);
+        lastSample = sample;
         blipSampleCounter++;
         if (blipSampleCounter == BLIP_BUFFER_SAMPLES_END_FRAME) {
             blipBuffer.endFrame(BLIP_BUFFER_SAMPLES_CLOCKS);
-            int read = blipBuffer.readSamples8bit(bufferSamples, 0, VgmEmu.VGM_SAMPLE_RATE_HZ);
+            int read = blipBuffer.readSamples8bit(bufferSamples, 0, BLIP_BUFFER_SIZE);
             blipSampleCounter = 0;
             if (psgCompare != null) {
-                byte[] res = Arrays.copyOf(bufferSamples, read);
+                byte[] res = Arrays.copyOf(bufferSamples, read); //TODO
                 psgCompare.pushData(PsgCompare.PsgType.NUKED_BLIP, res);
             }
         }
