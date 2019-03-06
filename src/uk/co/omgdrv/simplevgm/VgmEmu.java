@@ -213,11 +213,11 @@ public final class VgmEmu extends ClassicEmu {
                     break;
 
                 case CMD_GG_STEREO:
-                    psg.writeGG(time, data[pos++] & 0xFF);
+                    psg.writeGG(toPSGTime(time), data[pos++] & 0xFF);
                     break;
 
                 case CMD_PSG:
-                    psg.writeData(time, data[pos++] & 0xFF);
+                    psg.writeData(toPSGTime(time), data[pos++] & 0xFF);
                     break;
 
                 case CMD_YM2612_PORT0:
@@ -281,7 +281,7 @@ public final class VgmEmu extends ClassicEmu {
 
         int endTime = toPSGTime(duration);
         delay = time - duration;
-        psg.endFrame(duration);
+        psg.endFrame(endTime);
         if (pos >= data.length || endOfStream)
         {
             setTrackEnded();

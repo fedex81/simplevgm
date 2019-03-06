@@ -1,7 +1,6 @@
 package uk.co.omgdrv.simplevgm;
 
 import uk.co.omgdrv.simplevgm.model.VgmPsgProvider;
-import uk.co.omgdrv.simplevgm.psg.PsgCompare;
 import uk.co.omgdrv.simplevgm.util.Util;
 
 import java.io.IOException;
@@ -21,7 +20,7 @@ import java.util.stream.Collectors;
 public class Runner {
 
     private static boolean DISABLE_PSG = false;
-    private static String VGM_FOLDER = "vgm/psg";
+    private static String VGM_FOLDER = "vgm/flash";
     private static String VGM_FILE = null;
 
 
@@ -34,10 +33,10 @@ public class Runner {
         System.out.println(String.format("Playing %s: %s",
                 (isFolder ? "folder" : "file"), path.toAbsolutePath().toString()));
         VgmPsgProvider psgProvider = null;
-        PsgCompare psgCompare = PsgCompare.createInstance();
+//        psgProvider = PsgCompare.createInstance();
+//        ((PsgCompare)psgProvider).setVgmPlayer(v);
+        VGMPlayer v = VGMPlayer.createInstance(psgProvider);
 
-        VGMPlayer v = VGMPlayer.createInstance(psgCompare);
-        psgCompare.setVgmPlayer(v);
         Runner r = new Runner();
         if(isFolder){
             playRecursive(v, path);
