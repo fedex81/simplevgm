@@ -11,11 +11,26 @@ and run from the command line:
 
 Credits
 -------
+Original GME-VGM implementation:
+Shay Green
+https://bitbucket.org/mpyne/game-music-emu
+
 Java code lifted from here:
 https://github.com/GeoffWilson/VGM
 
-Original Game Music Emulator code:
-https://bitbucket.org/mpyne/game-music-emu
+PSG implementations:
+1. Shay Green: SmsApu
+2. Chris White: SN76496.java
+3. Chris White: SN76489.java
+4. Alexey Khokholov (Nuke.YKT): Nuked-PSG
+   https://github.com/nukeykt/Nuked-PSG
+
+An IIR filter library written in JAVA.
+Bernd Porr
+https://github.com/berndporr/iirj
+
+libresample4j
+https://github.com/dnault/libresample4j
 
 License
 -------
