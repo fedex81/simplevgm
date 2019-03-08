@@ -62,7 +62,7 @@ public class GreenPsgProvider extends BaseVgmPsgProvider {
     protected void updateSampleBuffer() {
         nanosToNextSample -= NANOS_PER_CYCLE;
         if (nanosToNextSample < 0) {
-            nanosToNextSample += NANOS_PER_CYCLE;
+            nanosToNextSample += NANOS_PER_SAMPLE;
             sampleCounter++;
             if (sampleCounter == VGM_SAMPLE_RATE_HZ) {
                 endFrameInternal(VGM_SAMPLE_RATE_HZ);
