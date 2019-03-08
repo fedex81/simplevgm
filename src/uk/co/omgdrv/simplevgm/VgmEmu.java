@@ -19,14 +19,13 @@ import uk.co.omgdrv.simplevgm.model.VgmFmProvider;
 import uk.co.omgdrv.simplevgm.model.VgmHeader;
 import uk.co.omgdrv.simplevgm.model.VgmPsgProvider;
 import uk.co.omgdrv.simplevgm.psg.green.SmsApu;
-import uk.co.omgdrv.simplevgm.util.StereoBuffer;
 import uk.co.omgdrv.simplevgm.util.Util;
 
 import static uk.co.omgdrv.simplevgm.model.VgmDataFormat.*;
 
 public final class VgmEmu extends ClassicEmu {
 
-    public static final int VGM_SAMPLE_RATE_HZ = 44100;
+    protected static final int VGM_SAMPLE_RATE_HZ = 44100;
     public static final int FADE_LENGTH_SEC = 5;
 
     public static VgmEmu createInstance(VgmPsgProvider apu, VgmFmProvider fm) {
@@ -334,10 +333,6 @@ public final class VgmEmu extends ClassicEmu {
                 logError();
                 break;
         }
-    }
-
-    public StereoBuffer getStereoBuffer() {
-        return buf;
     }
 
 

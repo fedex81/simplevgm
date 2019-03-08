@@ -1,6 +1,5 @@
 package uk.co.omgdrv.simplevgm.psg.gear;
 
-import uk.co.omgdrv.simplevgm.VgmEmu;
 import uk.co.omgdrv.simplevgm.psg.BaseVgmPsgProvider;
 import uk.co.omgdrv.simplevgm.psg.PsgCompare;
 
@@ -13,14 +12,12 @@ import uk.co.omgdrv.simplevgm.psg.PsgCompare;
  */
 public class GearPsgProvider extends BaseVgmPsgProvider {
 
-    private static final double NANOS_TO_SEC = 1_000_000_000;
-    private static final double NANOS_PER_SAMPLE = NANOS_TO_SEC / VgmEmu.VGM_SAMPLE_RATE_HZ; //22675 ns
     private static final double NANOS_PER_CYCLE = NANOS_TO_SEC / PsgProvider.GEAR_CLOCK_HZ / 2; // div2 //TODO Why
 
     protected PsgProvider psg;
     private double nanosToNextSample = NANOS_PER_SAMPLE;
     public int sampleCounter = 0;
-    public byte[] gearBuffer = new byte[VgmEmu.VGM_SAMPLE_RATE_HZ];
+    public byte[] gearBuffer = new byte[VGM_SAMPLE_RATE_HZ];
     protected PsgCompare psgCompare;
     protected PsgCompare.PsgType type = PsgCompare.PsgType.GEAR;
 
@@ -30,7 +27,7 @@ public class GearPsgProvider extends BaseVgmPsgProvider {
 
     public static GearPsgProvider createInstance(PsgCompare compare) {
         GearPsgProvider g = new GearPsgProvider();
-        g.psg = PsgProvider.createInstance(VgmEmu.VGM_SAMPLE_RATE_HZ);
+        g.psg = PsgProvider.createInstance(VGM_SAMPLE_RATE_HZ);
         g.psgCompare = compare;
         return g;
     }
@@ -43,7 +40,7 @@ public class GearPsgProvider extends BaseVgmPsgProvider {
 
     @Override
     protected long toPsgCycles(long vgmDelayCycles) {
-        return (long) ((vgmDelayCycles * 1.0 / VgmEmu.VGM_SAMPLE_RATE_HZ) * PsgProvider.GEAR_CLOCK_HZ);
+        return (long) ((vgmDelayCycles * 1.0 / VGM_SAMPLE_RATE_HZ) * PsgProvider.GEAR_CLOCK_HZ);
     }
 
     @Override
@@ -53,7 +50,7 @@ public class GearPsgProvider extends BaseVgmPsgProvider {
             nanosToNextSample += NANOS_PER_SAMPLE;
             psg.output(gearBuffer, sampleCounter, sampleCounter + 1);
             sampleCounter++;
-            if (sampleCounter == VgmEmu.VGM_SAMPLE_RATE_HZ) {
+            if (sampleCounter == VGM_SAMPLE_RATE_HZ) {
                 sampleCounter = 0;
                 if (psgCompare != null) {
                     psgCompare.pushData(type, gearBuffer);

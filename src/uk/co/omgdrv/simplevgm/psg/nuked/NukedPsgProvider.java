@@ -1,11 +1,18 @@
 package uk.co.omgdrv.simplevgm.psg.nuked;
 
-import uk.co.omgdrv.simplevgm.VgmEmu;
 import uk.co.omgdrv.simplevgm.model.VgmPsgProvider;
 import uk.co.omgdrv.simplevgm.psg.PsgCompare;
 import uk.co.omgdrv.simplevgm.util.BlipBuffer;
+import uk.co.omgdrv.simplevgm.util.DspUtil;
+import uk.co.omgdrv.simplevgm.util.Util;
 
-import java.util.stream.IntStream;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import static uk.co.omgdrv.simplevgm.psg.BaseVgmPsgProvider.VGM_SAMPLE_RATE_HZ;
 
 /**
  * ${FILE}
@@ -30,8 +37,8 @@ public class NukedPsgProvider implements VgmPsgProvider {
     private PsgYm7101.PsgContext context;
 
     private double[] rawBuffer = new double[NUKED_PSG_SAMPLING_HZ];
-    private double[] hpfBuffer = new double[VgmEmu.VGM_SAMPLE_RATE_HZ];
-    public byte[] nukedBuffer = new byte[VgmEmu.VGM_SAMPLE_RATE_HZ];
+    private double[] resampleBuffer = new double[VGM_SAMPLE_RATE_HZ];
+    public byte[] nukedBuffer = new byte[VGM_SAMPLE_RATE_HZ];
 
     private double nanosToNextSample = NANOS_PER_SAMPLE;
     private int currentCycle;
@@ -86,7 +93,7 @@ public class NukedPsgProvider implements VgmPsgProvider {
     }
 
     private static int toPsgClockCycles(long vgmDelayCycles) {
-        return (int) ((vgmDelayCycles * 1.0 / VgmEmu.VGM_SAMPLE_RATE_HZ) * CLOCK_HZ);
+        return (int) ((vgmDelayCycles * 1.0 / VGM_SAMPLE_RATE_HZ) * CLOCK_HZ);
     }
 
     private void runUntil(int delayCycles) {
@@ -112,8 +119,10 @@ public class NukedPsgProvider implements VgmPsgProvider {
             rawBuffer[sampleCounter] = rawSample;
             sampleCounter++;
             if (sampleCounter == NUKED_PSG_SAMPLING_HZ) {
-                hpf(rawBuffer);
                 sampleCounter = 0;
+                DspUtil.fastHpfResample(rawBuffer, resampleBuffer);
+                DspUtil.scale8bit(resampleBuffer, nukedBuffer);
+//                writeRawData(rawBuffer);
                 if (psgCompare != null) {
                     psgCompare.pushData(PsgCompare.PsgType.NUKED, nukedBuffer);
                 }
@@ -123,28 +132,10 @@ public class NukedPsgProvider implements VgmPsgProvider {
         return hasSample;
     }
 
-    private static int SAMPLE_RATIO = NUKED_PSG_SAMPLING_HZ / VgmEmu.VGM_SAMPLE_RATE_HZ;
-    private static double TOTAL_SAMPLES_WITH_RATIO = NUKED_PSG_SAMPLING_HZ / SAMPLE_RATIO;
-    private static int EXTRA_SAMPLE_POS = (int) Math.ceil(1 / ((TOTAL_SAMPLES_WITH_RATIO / VgmEmu.VGM_SAMPLE_RATE_HZ) - 1));
+    Path rawFile = Paths.get(".", "NUKED_RAW_" + System.currentTimeMillis() + ".raw");
 
-    private void hpf(double[] rawBuffer) {
-        int k = 0, l = 0;
-        for (int i = SAMPLE_RATIO; i < rawBuffer.length - 1; i += SAMPLE_RATIO) {
-            if (l % EXTRA_SAMPLE_POS == 0) {
-                l++;
-                continue;
-            }
-            hpfBuffer[k] = rawBuffer[i + 3] - rawBuffer[i - 2];
-            nukedBuffer[k++] = scaleSample(hpfBuffer[k]);
-            l++;
-//            System.out.println(nukedBuffer[k - 1]);
-        }
-        byte lastVal = nukedBuffer[k - 1];
-        IntStream.range(k, nukedBuffer.length).forEach(i -> nukedBuffer[i] = lastVal);
-    }
-
-    public static byte scaleSample(double val) {
-        int res = (int) Math.round(val * PSG_MAX_VOLUME);
-        return res > Byte.MAX_VALUE ? Byte.MAX_VALUE : (byte) (res < Byte.MIN_VALUE ? Byte.MIN_VALUE : res);
+    private void writeRawData(double[] rawBuffer) {
+        List<String> l = Arrays.stream(rawBuffer).mapToObj(Double::toString).collect(Collectors.toList());
+        Util.writeToFile(rawFile, l);
     }
 }

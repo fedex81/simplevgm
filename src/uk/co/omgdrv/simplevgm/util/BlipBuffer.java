@@ -14,7 +14,7 @@ Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA */
 
 public final class BlipBuffer
 {
-    static final boolean muchFaster = false; // speeds synthesis at a cost of quality
+    static final boolean muchFaster = true; //false; // speeds synthesis at a cost of quality
 
     public BlipBuffer()
     {
@@ -87,6 +87,18 @@ public final class BlipBuffer
         }
     }
 
+    public void addDeltaFast(int time, int delta) {
+        final int[] buf = this.buf;
+        time = time * factor + offset;
+        final int phase = (time) >>
+                (timeBits - phaseBits) & (phaseCount - 1);
+        time >>= timeBits;
+        delta *= volume;
+        int right = (delta >> phaseBits) * phase;
+        buf[time] += delta - right;
+        buf[time + 1] += right;
+    }
+
     // Adds delta at given time
     public void addDelta(int time, int delta)
     {
@@ -94,11 +106,12 @@ public final class BlipBuffer
         time = time * factor + offset;
         final int phase = (time) >>
                 (timeBits - phaseBits) & (phaseCount - 1);
-
+        time >>= timeBits;
         if (muchFaster)
         {
-            final int right = ((delta *= volume) >> phaseBits) * phase;
-            buf[time >>= timeBits] += delta - right;
+            delta *= volume;
+            int right = (delta >> phaseBits) * phase;
+            buf[time] += delta - right;
             buf[time + 1] += right;
         }
         else
@@ -107,7 +120,7 @@ public final class BlipBuffer
 
             // left half
             int[] k = kernel[phase];
-            buf[time >>= timeBits] += k[0] * delta;
+            buf[time] += k[0] * delta;
             buf[time + 1] += k[1] * delta;
             buf[time + 2] += k[2] * delta;
             buf[time + 3] += k[3] * delta;

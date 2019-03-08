@@ -12,6 +12,12 @@ import uk.co.omgdrv.simplevgm.util.BlipBuffer;
  */
 public abstract class BaseVgmPsgProvider implements VgmPsgProvider {
 
+
+    public static final double NANOS_TO_SEC = 1_000_000_000;
+    public static final int VGM_SAMPLE_RATE_HZ = 44100;
+    public static final double NANOS_PER_SAMPLE = NANOS_TO_SEC / VGM_SAMPLE_RATE_HZ;
+    public static int CLOCK_HZ = 3579545;
+
     protected int currentVgmDelayCycle;
 
     @Override
@@ -19,10 +25,9 @@ public abstract class BaseVgmPsgProvider implements VgmPsgProvider {
         runUntil(vgmDelayCycles);
     }
 
-    //TODO implement??
     @Override
     public void setOutput(BlipBuffer center, BlipBuffer left, BlipBuffer right) {
-
+        throw new IllegalArgumentException("Not implemented");
     }
 
     @Override

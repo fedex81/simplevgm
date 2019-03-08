@@ -12,7 +12,9 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.util.List;
 import java.util.function.Predicate;
+import java.util.zip.GZIPInputStream;
 
 /**
  * ${FILE}
@@ -28,15 +30,27 @@ public class Util {
     // Loads given URL and file within archive, and caches archive for future access
     public static byte[] readFile(String path) throws Exception
     {
-        String name = path.toUpperCase();
+        boolean isCompressed = isCompressedByteStream(path);
         byte[] res;
         try (
                 InputStream inFile = new FileInputStream(path);
-                InputStream inContent = compressedVgm.test(name) ? DataReader.openGZIP(inFile) : inFile
+                InputStream inContent = isCompressed ? DataReader.openGZIP(inFile) : inFile
                 ) {
             res = DataReader.loadData(inContent);
         }
         return res;
+    }
+
+    private static boolean isCompressedByteStream(String path) throws Exception {
+        boolean isCompressed = compressedVgm.test(path.toUpperCase());
+        if (!isCompressed) {
+            try (InputStream inFile = new FileInputStream(path)) {
+                byte[] res = new byte[2];
+                inFile.read(res, 0, res.length);
+                isCompressed = GZIPInputStream.GZIP_MAGIC == getUInt32LE(res);
+            }
+        }
+        return isCompressed;
     }
 
     // "Resizes" array to new size and preserves elements from in
@@ -117,11 +131,52 @@ public class Util {
         return value;
     }
 
-    public static void setUInt32(int value, int[] data, int startIndex) {
+    public static int getUInt32LE(byte... bytes) {
+        int value = (bytes[0] & 0xFF) << 0;
+        value = bytes.length > 1 ? value | ((bytes[1] & 0xFF) << 8) : value;
+        value = bytes.length > 2 ? value | ((bytes[2] & 0xFF) << 16) : value;
+        value = bytes.length > 3 ? value | ((bytes[3] & 0xFF) << 24) : value;
+        return value;
+    }
+
+    public static void setUInt32LE(int value, int[] data, int startIndex) {
         data[startIndex + 3] = (value >> 24) & 0xFF;
         data[startIndex + 2] = (value >> 16) & 0xFF;
         data[startIndex + 1] = (value >> 8) & 0xFF;
         data[startIndex] = (value) & 0xFF;
+    }
+
+    public static void setUInt32BE(int value, int[] data, int startIndex) {
+        data[startIndex] = (value >> 24) & 0xFF;
+        data[startIndex + 1] = (value >> 16) & 0xFF;
+        data[startIndex + 2] = (value >> 8) & 0xFF;
+        data[startIndex + 3] = (value) & 0xFF;
+    }
+
+    public static void setSigned16BE(short value, byte[] data, int startIndex) {
+        data[startIndex] = (byte) (value >> 8);
+        data[startIndex + 1] = (byte) value;
+    }
+
+    public static void setSigned16LE(short value, byte[] data, int startIndex) {
+        data[startIndex + 1] = (byte) (value >> 8);
+        data[startIndex] = (byte) value;
+    }
+
+    public static short getSigned16BE(byte lsb, byte msb) {
+        return (short) ((msb & 0xFF) | (lsb << 8));
+    }
+
+    public static short getSigned16LE(byte lsb, byte msb) {
+        return (short) ((lsb & 0xFF) | (msb << 8));
+    }
+
+    public static short getSigned16BE(byte... bytes) {
+        return getSigned16BE(bytes[0], bytes[1]);
+    }
+
+    public static short getSigned16LE(byte... bytes) {
+        return getSigned16LE(bytes[0], bytes[1]);
     }
 
     public static String toStringValue(int... data) {
@@ -144,6 +199,14 @@ public class Util {
     public static void writeToFile(Path file, byte[] buffer) {
         try {
             Files.write(file, buffer, StandardOpenOption.CREATE, StandardOpenOption.APPEND);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void writeToFile(Path file, List<String> lines) {
+        try {
+            Files.write(file, lines, StandardOpenOption.CREATE, StandardOpenOption.APPEND);
         } catch (IOException e) {
             e.printStackTrace();
         }
