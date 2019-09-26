@@ -80,7 +80,7 @@ public abstract class MusicEmu {
 
     // Sets fade start and length, in seconds. Must be set after call to startTrack().
     public final void setFade(int start, int length) {
-        fadeStart = sampleRate_ * start;
+        fadeStart = sampleRate_ * Math.max(0, start);
         fadeStep = sampleRate_ * length / (fadeBlockSize * fadeShift);
         if (fadeStep < 1)
             fadeStep = 1;

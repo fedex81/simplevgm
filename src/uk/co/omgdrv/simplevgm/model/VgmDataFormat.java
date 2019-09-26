@@ -10,6 +10,7 @@ package uk.co.omgdrv.simplevgm.model;
 public class VgmDataFormat {
     public static final int CMD_GG_STEREO = 0x4F;
     public static final int CMD_PSG = 0x50;
+    public static final int CMD_YM2413_PORT = 0x51;
     public static final int CMD_YM2612_PORT0 = 0x52;
     public static final int CMD_YM2612_PORT1 = 0x53;
     public static final int CMD_DELAY = 0x61;

@@ -15,6 +15,7 @@ License along with this module; if not, write to the Free Software Foundation,
 Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA */
 
 import uk.co.omgdrv.simplevgm.fm.YM2612;
+import uk.co.omgdrv.simplevgm.fm.ym2413.Ym2413Provider;
 import uk.co.omgdrv.simplevgm.model.VgmFmProvider;
 import uk.co.omgdrv.simplevgm.model.VgmHeader;
 import uk.co.omgdrv.simplevgm.model.VgmPsgProvider;
@@ -77,6 +78,11 @@ public final class VgmEmu extends ClassicEmu {
         }
         else
         {
+            fm_clock_rate = vgmHeader.getYm2413Clk();
+            if (fm_clock_rate > 0) {
+                fm = new Ym2413Provider();
+                fm.init(fm_clock_rate, sampleRate());
+            }
             buf.setVolume(1.0);
         }
 
@@ -147,8 +153,14 @@ public final class VgmEmu extends ClassicEmu {
 
     private int toFMTime(int vgmTime)
     {
-        return countSamples(toPSGTime(vgmTime));
+        if (fm instanceof Ym2413Provider) {
+            return (int) Math.round(vgmTime / vgmSamplesPerMs);
+        } else {
+            return countSamples(toPSGTime(vgmTime));
+        }
     }
+
+    int totSamples = 0;
 
     private void runFM(int vgmTime)
     {
@@ -157,6 +169,12 @@ public final class VgmEmu extends ClassicEmu {
         {
             fm.update(fm_buf_lr, fm_pos, count);
             fm_pos += count;
+            totSamples += count;
+//            if(totSamples > 44100) {
+//                System.out.println(System.currentTimeMillis() + ", runFM samples 1s");
+//                totSamples -= 44100;
+//            }
+
         }
     }
 
@@ -172,7 +190,7 @@ public final class VgmEmu extends ClassicEmu {
             dac_amp |= dac_disabled;
     }
 
-    private static boolean endlessLoopFlag = false;
+    private static boolean endlessLoopFlag = true;
     private long sampleCounter = 0;
 
     protected int runMsec(int msec)
@@ -201,7 +219,11 @@ public final class VgmEmu extends ClassicEmu {
 //                    System.out.println("End command after samples: " + sampleCounter);
                     boolean loopDone = sampleCounter >= vgmHeader.getNumSamples() + vgmHeader.getLoopSamples();
                     endOfStream = !endlessLoopFlag && loopDone;
-                    pos = loopDone ? vgmHeader.getDataOffset() : vgmHeader.getLoopOffset();
+                    if (vgmHeader.getLoopSamples() == 0 && sampleCounter < vgmHeader.getNumSamples()) {
+                        pos = data.length;
+                    } else {
+                        pos = loopDone ? vgmHeader.getDataOffset() : vgmHeader.getLoopOffset();
+                    }
                     break;
                 case CMD_DELAY_735:
                     time += 735;
@@ -218,7 +240,14 @@ public final class VgmEmu extends ClassicEmu {
                 case CMD_PSG:
                     psg.writeData(toPSGTime(time), data[pos++] & 0xFF);
                     break;
-
+//                0x51	aa dd	YM2413, write value dd to register aa
+                case CMD_YM2413_PORT:
+                    runFM(time);
+                    int reg1 = data[pos++] & 0xFF;
+                    int val1 = data[pos++] & 0xFF;
+                    fm.write0(Ym2413Provider.FmReg.ADDR_LATCH_REG.ordinal(), reg1);
+                    fm.write0(Ym2413Provider.FmReg.DATA_REG.ordinal(), val1);
+                    break;
                 case CMD_YM2612_PORT0:
                     int port = data[pos++] & 0xFF;
                     int val = data[pos++] & 0xFF;

@@ -2,7 +2,6 @@ package uk.co.omgdrv.simplevgm.model;
 
 import uk.co.omgdrv.simplevgm.util.Util;
 
-
 import java.util.Objects;
 
 import static uk.co.omgdrv.simplevgm.model.VgmHeader.Field.*;
@@ -71,6 +70,7 @@ public class VgmHeader {
 
     private int sn76489Clk;
     private int ym2612Clk;
+    private int ym2413Clk;
 
     private int rate;
 
@@ -92,6 +92,7 @@ public class VgmHeader {
         v.version = getIntValue(data, VERSION);
         v.versionString = toVersionString(v.version);
         v.sn76489Clk = getIntValue(data, SN76489_CLK);
+        v.ym2413Clk = getIntValue(data, YM2413_CLK);
         v.gd3Offset =  getIntValue(data, GD3_OFFSET);
         v.numSamples=  getIntValue(data, NUM_SAMPLES);
         v.loopOffset=  getIntValue(data, LOOP_OFFSET);
@@ -103,7 +104,7 @@ public class VgmHeader {
         v.sn76489Flags = Util.getUInt32LE(data[SN76489_FLAGS.getPosition()]);
         v.ym2612Clk=  getIntValue(data, YM2612_CLK);
         if(v.ym2612Clk == 0 && v.version <= 0x101){
-            v.ym2612Clk=  getIntValue(data, YM2413_CLK);
+//            v.ym2612Clk = v.ym2413Clk;
         }
         v.dataOffset=  getIntValue(data, DATA_OFFSET);
         v.dataOffset = v.dataOffset == 0 ? DEFAULT_DATA_OFFSET : v.dataOffset + DATA_OFFSET.getPosition();
@@ -154,6 +155,10 @@ public class VgmHeader {
 
     public int getYm2612Clk() {
         return ym2612Clk;
+    }
+
+    public int getYm2413Clk() {
+        return ym2413Clk;
     }
 
     public int getRate() {
