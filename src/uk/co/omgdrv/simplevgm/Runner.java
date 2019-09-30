@@ -22,7 +22,7 @@ public class Runner {
 
     private static boolean DISABLE_PSG = false;
     private static String VGM_FOLDER = "vgm/psg";
-    private static String VGM_FILE = null; //"vgm/flash/Flash, The - 01  - Title Screen.vgz";
+    private static String VGM_FILE = null; //"vgm/test03.vgm"; //"vgm/flash/Flash, The - 01  - Title Screen.vgz";
     private static boolean runPsgCompare = false;
 
     private static Predicate<Path> vgmFilesPredicate = p ->

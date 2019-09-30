@@ -61,11 +61,9 @@ public final class VgmEmu extends ClassicEmu {
 
         // PSG clock rate
         int clockRate = vgmHeader.getSn76489Clk();
-        if (clockRate > 0) {
-            psg = psg == VgmPsgProvider.NO_SOUND ? new SmsApu() : psg;
-        }
         //this needs to be set even if there is no psg
         clockRate = clockRate > 0 ? clockRate : 3579545;
+        psg = new SmsApu(); //this needs to be created even if there is no psg
         psgFactor = (int) ((float) psgTimeUnit / vgmRate * clockRate + 0.5);
 
         // FM clock rate
@@ -90,6 +88,7 @@ public final class VgmEmu extends ClassicEmu {
         psg.setOutput(buf.center(), buf.left(), buf.right());
         pos = vgmHeader.getDataOffset();
 
+        System.out.println(vgmHeader.toString());
         return 1;
     }
 
@@ -156,7 +155,7 @@ public final class VgmEmu extends ClassicEmu {
         if (fm instanceof Ym2413Provider) {
             return (int) Math.round(vgmTime / vgmSamplesPerMs);
         } else {
-            return countSamples(toPSGTime(vgmTime));
+            return countSamples(toPSGTimeGreen(vgmTime));
         }
     }
 
