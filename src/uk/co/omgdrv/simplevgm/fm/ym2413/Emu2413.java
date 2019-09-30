@@ -136,7 +136,7 @@ public final class Emu2413 {
     // Input clock
     private static final int clk = 3579545;
     // Sampling rate
-    public static final int rate = 49716;
+    private static final int rate = 49716;
 
     // WaveTable for each envelope amp
     private static final int[] fullsintable = new int[PG_WIDTH];

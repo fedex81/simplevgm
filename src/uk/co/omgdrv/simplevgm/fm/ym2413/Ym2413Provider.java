@@ -1,5 +1,6 @@
 package uk.co.omgdrv.simplevgm.fm.ym2413;
 
+import uk.co.omgdrv.simplevgm.VgmEmu;
 import uk.co.omgdrv.simplevgm.model.VgmFmProvider;
 
 import java.util.concurrent.atomic.AtomicInteger;
@@ -10,6 +11,9 @@ import java.util.concurrent.atomic.AtomicInteger;
  * Federico Berti
  * <p>
  * Copyright 2019
+ *
+ * F = (49716 * Fnum) / (2^19 - (octave-1)) ??
+ *
  */
 public class Ym2413Provider implements VgmFmProvider {
 
@@ -18,7 +22,7 @@ public class Ym2413Provider implements VgmFmProvider {
 
     // Input clock
     private static final int CLOCK_HZ = 3579545;
-    public static final int FM_RATE = 49716;
+    public static final double FM_RATE = 49716.0;
 
     public enum FmReg {ADDR_LATCH_REG, DATA_REG}
 
@@ -71,31 +75,24 @@ public class Ym2413Provider implements VgmFmProvider {
         return reset();
     }
 
-    static final int FM_CALCS_PER_MS_INT = (int) (FM_RATE / 1000d);
-    static final double FM_CALCS_PER_MS = FM_RATE / 1000d;
-    double totFmCalcAcc = 0;
+    static final double FM_CALCS_PER_MS = VgmEmu.VGM_SAMPLE_RATE_HZ / 1000.0;
+    static double ymRatePerMs = FM_RATE / 1000.0;
+    final static double rateRatio = FM_CALCS_PER_MS / ymRatePerMs;
+    double rateRatioAcc = 0;
 
     @Override
     public void update(int[] buf_lr, int offset, int periodMs) {
         offset <<= 1; //stereo
-//        for (int i = 0; i < periodMs; i++) {
-//            int num = FM_CALCS_PER_MS_INT + ((i %3 != 0) ? 1 : 0); //49.75
-//            IntStream.range(0, num).forEach(j -> Emu2413.OPLL_calc(opll));
-//            int sample = getSoundSample();
-//            buf_lr[offset++] = sample;
-//            buf_lr[offset++] = sample;
-//        }
-        totFmCalcAcc += FM_CALCS_PER_MS * periodMs;
-        int i = 0;
-        for (i = 0; i < totFmCalcAcc; i++) {
-            Emu2413.OPLL_calc(opll);
-            if (i % FM_CALCS_PER_MS_INT == 0) {
-                int sample = getSoundSample();
-                buf_lr[offset++] = sample;
-                buf_lr[offset++] = sample;
+        int sampleRateCalcAcc = (int) Math.round(ymRatePerMs * periodMs);
+        for (int i = 0; i < sampleRateCalcAcc; i++) {
+            int out = Emu2413.OPLL_calc(opll);
+            rateRatioAcc += rateRatio;
+            if (rateRatioAcc > 1) {
+                buf_lr[offset++] = out;
+                buf_lr[offset++] = out;
+                rateRatioAcc--;
             }
         }
-        totFmCalcAcc -= i;
     }
 
     /**
@@ -105,16 +102,16 @@ public class Ym2413Provider implements VgmFmProvider {
      */
     static final int AUDIO_SCALE = 15;
 
-    public int getSoundSample() {
-        int sample = 0;
-        for (int i = 0; i < 9; i++) {
-            sample += opll.slot[(i << 1) | 1].output[1];
-        }
-        sample = sample * AUDIO_SCALE;
-        soundSample.set(sample);
-//        System.out.println(soundSample.get());
-        return soundSample.get();
-    }
+//    public int getSoundSample() {
+//        int sample = 0;
+//        for (int i = 0; i < 6; i++) {
+//            sample += opll.slot[(i << 1) | 1].output[1];
+//        }
+//        sample = sample * AUDIO_SCALE;
+//        soundSample.set(sample);
+////        System.out.println(soundSample.get());
+//        return soundSample.get();
+//    }
 
     @Override
     public void write0(int addr, int data) {

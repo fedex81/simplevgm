@@ -26,7 +26,7 @@ import static uk.co.omgdrv.simplevgm.model.VgmDataFormat.*;
 
 public final class VgmEmu extends ClassicEmu {
 
-    protected static final int VGM_SAMPLE_RATE_HZ = 44100;
+    public static final int VGM_SAMPLE_RATE_HZ = 44100;
     public static final int FADE_LENGTH_SEC = 5;
 
     public static VgmEmu createInstance(VgmPsgProvider apu, VgmFmProvider fm) {
@@ -159,8 +159,6 @@ public final class VgmEmu extends ClassicEmu {
         }
     }
 
-    int totSamples = 0;
-
     private void runFM(int vgmTime)
     {
         int count = toFMTime(vgmTime) - fm_pos;
@@ -168,12 +166,6 @@ public final class VgmEmu extends ClassicEmu {
         {
             fm.update(fm_buf_lr, fm_pos, count);
             fm_pos += count;
-            totSamples += count;
-//            if(totSamples > 44100) {
-//                System.out.println(System.currentTimeMillis() + ", runFM samples 1s");
-//                totSamples -= 44100;
-//            }
-
         }
     }
 
