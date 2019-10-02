@@ -79,20 +79,26 @@ public class Ym2413Provider implements VgmFmProvider {
     static double ymRatePerMs = FM_RATE / 1000.0;
     final static double rateRatio = FM_CALCS_PER_MS / ymRatePerMs;
     double rateRatioAcc = 0;
+    double sampleRateCalcAcc = 0;
+    int cma = 0;
 
     @Override
-    public void update(int[] buf_lr, int offset, int periodMs) {
+    public void update(int[] buf_lr, int offset, int samples441) {
         offset <<= 1; //stereo
-        int sampleRateCalcAcc = (int) Math.round(ymRatePerMs * periodMs);
-        for (int i = 0; i < sampleRateCalcAcc; i++) {
-            int out = Emu2413.OPLL_calc(opll);
+        sampleRateCalcAcc += samples441 / rateRatio;
+        int total = (int) sampleRateCalcAcc + 1; //needed to match the offsets
+        for (int i = 0; i < total; i++) {
+            int res = Emu2413.OPLL_calc(opll);
             rateRatioAcc += rateRatio;
+            cma += (res - cma) >> 1;
+            res = cma;
             if (rateRatioAcc > 1) {
-                buf_lr[offset++] = out;
-                buf_lr[offset++] = out;
+                buf_lr[offset++] = res;
+                buf_lr[offset++] = res;
                 rateRatioAcc--;
             }
         }
+        sampleRateCalcAcc -= total;
     }
 
     /**
@@ -102,16 +108,6 @@ public class Ym2413Provider implements VgmFmProvider {
      */
     static final int AUDIO_SCALE = 15;
 
-//    public int getSoundSample() {
-//        int sample = 0;
-//        for (int i = 0; i < 6; i++) {
-//            sample += opll.slot[(i << 1) | 1].output[1];
-//        }
-//        sample = sample * AUDIO_SCALE;
-//        soundSample.set(sample);
-////        System.out.println(soundSample.get());
-//        return soundSample.get();
-//    }
 
     @Override
     public void write0(int addr, int data) {

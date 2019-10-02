@@ -152,11 +152,7 @@ public final class VgmEmu extends ClassicEmu {
 
     private int toFMTime(int vgmTime)
     {
-        if (fm instanceof Ym2413Provider) {
-            return (int) Math.round(vgmTime / vgmSamplesPerMs);
-        } else {
-            return countSamples(toPSGTimeGreen(vgmTime));
-        }
+        return countSamples(toPSGTimeGreen(vgmTime));
     }
 
     private void runFM(int vgmTime)
