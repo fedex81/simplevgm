@@ -1,12 +1,10 @@
 package uk.co.omgdrv.simplevgm.fm;
 
-import uk.co.omgdrv.simplevgm.model.VgmFmProvider;
-
 /**
  * Test port of Gens YM2612 core.
  * Stephan Dittrich, 2005
  */
-public final class YM2612 implements VgmFmProvider
+public final class YM2612 implements MdFmProvider
 {
     static final int NULL_RATE_SIZE = 32;
 
@@ -254,12 +252,12 @@ public final class YM2612 implements VgmFmProvider
         return Math.log(x) / Math.log(10.0);
     }
 
-    public final int init(int Clock, int Rate)
+    public final void init(int Clock, int Rate)
     {
         int i, j;
         double x;
 
-        if ((Rate == 0) || (Clock == 0)) return 1;
+        if ((Rate == 0) || (Clock == 0)) return;
 
         YM2612_Clock = Clock;
         YM2612_Rate = Rate;
@@ -438,10 +436,9 @@ public final class YM2612 implements VgmFmProvider
         LFO_INC_TAB[7] = (int) (72.2 * (double) (1 << (LFO_HBITS + LFO_LBITS)) / j);
 
         reset();
-        return 0;
     }
 
-    public final int reset()
+    public final void reset()
     {
         int i, j;
 
@@ -506,8 +503,11 @@ public final class YM2612 implements VgmFmProvider
         }
 
         write0(0x2A, 0x80);
+    }
 
-        return 0;
+    @Override
+    public int readRegister(int type, int regNumber) {
+        return YM2612_REG[type][regNumber];
     }
 
 
@@ -516,7 +516,50 @@ public final class YM2612 implements VgmFmProvider
         return (YM2612_Status);
     }
 
-    public final void write0(int addr, int data)
+
+    int addressLatch;
+
+    @Override
+    public void writePort(int addr, int data) {
+        addr = addr & 0x3;
+        switch (addr) {
+            case FM_ADDRESS_PORT0:
+                addressLatch = data;
+                break;
+            case FM_ADDRESS_PORT1:
+                addressLatch = data + 0x100;
+                break;
+            default:
+                writeDataPort(data);
+                break;
+        }
+    }
+
+    private void writeDataPort(int data) {
+        int realAddr = addressLatch;
+        int regPart = realAddr >= 0x100 ? 1 : 0;
+        int realAddrReg = regPart > 0 ? realAddr - 0x100 : realAddr;
+
+        if (realAddr < 0x30) {
+            YM2612_REG[regPart][realAddrReg] = data;
+            setYM(realAddrReg, data);
+        } else {
+            if (realAddrReg < 0xA0) {
+                setSlot(realAddr, data);
+            } else {
+                setChannel(realAddr, data);
+            }
+            setBusyFlag();
+        }
+    }
+
+    private void setBusyFlag() {
+//        YM2612_Status |= FM_STATUS_BUSY_BIT_MASK;
+//        busyCycles = BUSY_CYCLES;
+        //DO NOTHING
+    }
+
+    private final void write0(int addr, int data)
     {
         if (addr < 0x30)
         {
@@ -534,7 +577,7 @@ public final class YM2612 implements VgmFmProvider
         }
     }
 
-    public final void write1(int addr, int data)
+    private final void write1(int addr, int data)
     {
         if (addr >= 0x30 && YM2612_REG[1][addr] != data)
         {

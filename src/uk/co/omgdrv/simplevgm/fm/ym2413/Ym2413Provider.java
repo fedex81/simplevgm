@@ -1,9 +1,6 @@
 package uk.co.omgdrv.simplevgm.fm.ym2413;
 
-import uk.co.omgdrv.simplevgm.VgmEmu;
 import uk.co.omgdrv.simplevgm.model.VgmFmProvider;
-
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * ${FILE}
@@ -18,11 +15,15 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class Ym2413Provider implements VgmFmProvider {
 
     private OPLL opll;
-    private AtomicInteger soundSample = new AtomicInteger();
 
     // Input clock
     private static final int CLOCK_HZ = 3579545;
     public static final double FM_RATE = 49716.0;
+
+    static double ymRatePerMs = FM_RATE / 1000.0;
+    final static double rateRatio = FM_CALCS_PER_MS / ymRatePerMs;
+    double rateRatioAcc = 0;
+    double sampleRateCalcAcc = 0;
 
     public enum FmReg {ADDR_LATCH_REG, DATA_REG}
 
@@ -57,30 +58,22 @@ public class Ym2413Provider implements VgmFmProvider {
     };
 
     @Override
-    public int reset() {
+    public void reset() {
         for (int i = 0x10; i < 0x40; i++) {
             Emu2413.OPLL_writeIO(opll, 0, i);
             Emu2413.OPLL_writeIO(opll, 1, 0);
         }
         Emu2413.OPLL_reset_patch(opll);
         Emu2413.OPLL_reset(opll);
-        return 0;
     }
 
     @Override
-    public int init(int clock, int rate) {
+    public void init(int clock, int rate) {
         Emu2413.default_inst = ym2413_inst;
         Emu2413.OPLL_init();
         opll = Emu2413.OPLL_new();
-        return reset();
     }
 
-    static final double FM_CALCS_PER_MS = VgmEmu.VGM_SAMPLE_RATE_HZ / 1000.0;
-    static double ymRatePerMs = FM_RATE / 1000.0;
-    final static double rateRatio = FM_CALCS_PER_MS / ymRatePerMs;
-    double rateRatioAcc = 0;
-    double sampleRateCalcAcc = 0;
-    int cma = 0;
 
     @Override
     public void update(int[] buf_lr, int offset, int samples441) {
@@ -90,8 +83,6 @@ public class Ym2413Provider implements VgmFmProvider {
         for (int i = 0; i < total; i++) {
             int res = Emu2413.OPLL_calc(opll);
             rateRatioAcc += rateRatio;
-            cma += (res - cma) >> 1;
-            res = cma;
             if (rateRatioAcc > 1) {
                 buf_lr[offset++] = res;
                 buf_lr[offset++] = res;
@@ -101,16 +92,8 @@ public class Ym2413Provider implements VgmFmProvider {
         sampleRateCalcAcc -= total;
     }
 
-    /**
-     * VOL
-     * single slot [-239, 238]
-     * 9 slots [-2151, 2142] * 15 = [-32265, 32115]
-     */
-    static final int AUDIO_SCALE = 15;
-
-
     @Override
-    public void write0(int addr, int data) {
+    public void write(int addr, int data) {
         switch (FmReg.values()[addr]) {
             case ADDR_LATCH_REG:
                 Emu2413.OPLL_writeIO(opll, 0, data);
@@ -119,10 +102,5 @@ public class Ym2413Provider implements VgmFmProvider {
                 Emu2413.OPLL_writeIO(opll, 1, data);
                 break;
         }
-    }
-
-    @Override
-    public void write1(int addr, int data) {
-        throw new RuntimeException();
     }
 }

@@ -1,5 +1,7 @@
 package uk.co.omgdrv.simplevgm.model;
 
+import uk.co.omgdrv.simplevgm.VgmEmu;
+
 /**
  * ${FILE}
  * <p>
@@ -9,25 +11,40 @@ package uk.co.omgdrv.simplevgm.model;
  */
 public interface VgmFmProvider {
 
-    int reset();
+    double FM_CALCS_PER_MS = VgmEmu.VGM_SAMPLE_RATE_HZ / 1000.0;
 
-    int init(int clock, int rate);
+    void reset();
+
+    void init(int clock, int rate);
 
     void update(int[] buf_lr, int offset, int end);
 
-    void write0(int addr, int data);
+    default int readRegister(int type, int regNumber) {
+        throw new RuntimeException("Invalid");
+    }
 
-    void write1(int addr, int data);
+    default void writePort(int addr, int data) {
+        throw new RuntimeException("Invalid");
+    }
+
+    //single port
+    default void write(int addr, int data) {
+        throw new RuntimeException("Invalid");
+    }
+
+    default int read() {
+        throw new RuntimeException("Invalid");
+    }
 
     VgmFmProvider NO_SOUND = new VgmFmProvider() {
         @Override
-        public int reset() {
-            return 0;
+        public void reset() {
+
         }
 
         @Override
-        public int init(int Clock, int Rate) {
-            return 0;
+        public void init(int Clock, int Rate) {
+
         }
 
         @Override
@@ -36,12 +53,12 @@ public interface VgmFmProvider {
         }
 
         @Override
-        public void write0(int addr, int data) {
+        public void writePort(int addr, int data) {
 
         }
 
         @Override
-        public void write1(int addr, int data) {
+        public void write(int addr, int data) {
 
         }
     };

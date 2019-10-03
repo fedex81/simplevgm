@@ -14,6 +14,7 @@ details. You should have received a copy of the GNU Lesser General Public
 License along with this module; if not, write to the Free Software Foundation,
 Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA */
 
+import uk.co.omgdrv.simplevgm.fm.MdFmProvider;
 import uk.co.omgdrv.simplevgm.fm.YM2612;
 import uk.co.omgdrv.simplevgm.fm.ym2413.Ym2413Provider;
 import uk.co.omgdrv.simplevgm.model.VgmFmProvider;
@@ -232,8 +233,8 @@ public final class VgmEmu extends ClassicEmu {
                     runFM(time);
                     int reg1 = data[pos++] & 0xFF;
                     int val1 = data[pos++] & 0xFF;
-                    fm.write0(Ym2413Provider.FmReg.ADDR_LATCH_REG.ordinal(), reg1);
-                    fm.write0(Ym2413Provider.FmReg.DATA_REG.ordinal(), val1);
+                    fm.write(Ym2413Provider.FmReg.ADDR_LATCH_REG.ordinal(), reg1);
+                    fm.write(Ym2413Provider.FmReg.DATA_REG.ordinal(), val1);
                     break;
                 case CMD_YM2612_PORT0:
                     int port = data[pos++] & 0xFF;
@@ -246,14 +247,17 @@ public final class VgmEmu extends ClassicEmu {
                             dac_amp |= dac_disabled;
                         }
                         runFM(time);
-                        fm.write0(port, val);
+                        fm.writePort(MdFmProvider.FM_ADDRESS_PORT0, port);
+                        fm.writePort(MdFmProvider.FM_DATA_PORT0, val);
                     }
                     break;
 
                 case CMD_YM2612_PORT1:
                     runFM(time);
                     int fmPort = data[pos++] & 0xFF;
-                    fm.write1(fmPort, data[pos++] & 0xFF);
+                    int fmVal = data[pos++] & 0xFF;
+                    fm.writePort(MdFmProvider.FM_ADDRESS_PORT1, fmPort);
+                    fm.writePort(MdFmProvider.FM_DATA_PORT1, fmVal);
                     break;
 
                 case CMD_DELAY:
