@@ -1,7 +1,11 @@
 Simple VGM
 ----------
-a (very) simple - Java based - [VGM][1] 1.50 player
- 
+a (very) simple - Java based - [VGM][1] 1.50 player  
+
+Supported chips:
+- TI SN76489
+- Yamaha YM2612
+- Yamaha YM2413
 
 How To
 -----
@@ -18,19 +22,23 @@ https://bitbucket.org/mpyne/game-music-emu
 Java code lifted from here:
 https://github.com/GeoffWilson/VGM
 
-PSG implementations:
+SN76489 PSG implementations:
 1. Shay Green: SmsApu
 2. Chris White: SN76496.java
 3. Chris White: SN76489.java
 4. Alexey Khokholov (Nuke.YKT): Nuked-PSG
    https://github.com/nukeykt/Nuked-PSG
 
-An IIR filter library written in JAVA.
-Bernd Porr
+An IIR filter library written in JAVA.  
+Bernd Porr  
 https://github.com/berndporr/iirj
 
-libresample4j
+libresample4j  
 https://github.com/dnault/libresample4j
+
+YM2413 emulation  
+Mitsutaka Okazaki  
+https://github.com/digital-sound-antiques/emu2413
 
 License
 -------
