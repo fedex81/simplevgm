@@ -21,8 +21,8 @@ import java.util.stream.Collectors;
 public class Runner {
 
     private static boolean DISABLE_PSG = false;
-    private static String VGM_FOLDER = "vgm/psg";
-    private static String VGM_FILE = null; //"vgm/test03.vgm"; //"vgm/flash/Flash, The - 01  - Title Screen.vgz";
+    private static String VGM_FOLDER = "vgm";
+    private static String VGM_FILE = null; //"vgm/ps_fm_01.vgm"; //"vgm/flash/Flash, The - 01  - Title Screen.vgz";
     private static boolean runPsgCompare = false;
 
     private static Predicate<Path> vgmFilesPredicate = p ->
