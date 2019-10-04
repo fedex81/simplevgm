@@ -2,6 +2,19 @@ package uk.co.omgdrv.simplevgm.fm.ym2413;
 
 import java.io.Serializable;
 
+// Port of emu2413.c v0.61 -- YM2413 emulator written by Mitsutaka Okazaki
+// zlib license
+
+/**
+ * Ported by the nintaco team: https://nintaco.com
+ * Original C implementation: https://github.com/digital-sound-antiques/emu2413
+ * <p>
+ * ---
+ * 2019-10-01 Federico Berti
+ * - back-ported 0.63 changes: Support per-channel output
+ * - update 2413 instruments
+ * - adaptation work
+ */
 public class OPLL implements Serializable {
 
     private static final long serialVersionUID = 0;
@@ -12,10 +25,6 @@ public class OPLL implements Serializable {
     public int realstep;
     public int oplltime;
     public int opllstep;
-    public int prev;
-    public int next;
-    public int[] sprev = new int[2];
-    public int[] snext = new int[2];
     public int[] pan = new int[16];
 
     // Register
@@ -43,6 +52,10 @@ public class OPLL implements Serializable {
     // Voice Data
     public OPLL_PATCH[] patch = new OPLL_PATCH[19 * 2];
     public int[] patch_update = new int[2]; // flag for check patch update
+
+    /* Output of each channels / 0-8:TONE, 9:BD 10:HH 11:SD, 12:TOM, 13:CYM */
+    int[] ch_out = new int[14];
+
 
     public OPLL() {
         for (int i = slot.length - 1; i >= 0; i--) {
