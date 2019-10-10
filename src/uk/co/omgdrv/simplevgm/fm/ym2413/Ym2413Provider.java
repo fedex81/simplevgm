@@ -44,7 +44,7 @@ public class Ym2413Provider implements VgmFmProvider {
     }
 
 
-    static int AUDIO_SCALE_BITS = 2;
+    static int AUDIO_SCALE_BITS = 3;
 
     @Override
     public void update(int[] buf_lr, int offset, int samples441) {
