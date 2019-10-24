@@ -407,7 +407,7 @@ public class Ym3438 implements IYm3438 {
 
             /* Address */
             if (chip.write_a_en) {
-                chip.write_fm_mode_a = chip.write_data & 0x1ff;
+                chip.write_fm_mode_a = chip.write_data & 0xff;
             }
         }
 
@@ -1154,7 +1154,8 @@ public class Ym3438 implements IYm3438 {
                 break;
         }
         chip.eg_timer &= ~(chip.mode_test_21[5] << chip.eg_cycle);
-        if (((chip.eg_timer >> chip.eg_cycle) > 0 || ((chip.pin_test_in > 0 && chip.eg_custom_timer) && chip.eg_cycle_stop > 0))) {
+        if ((((chip.eg_timer >> chip.eg_cycle) | (chip.pin_test_in & (chip.eg_custom_timer ? 1 : 0)))
+                & chip.eg_cycle_stop) > 0) {
             chip.eg_shift = chip.eg_cycle;
             chip.eg_cycle_stop = 0;
         }
@@ -1226,6 +1227,7 @@ public class Ym3438 implements IYm3438 {
     @Override
     public void OPN2_Write(IYm3438.IYm3438_Type chip, /* 32 bit unsigned */ int port, /* 8 bit unsigned */ int data) {
         port &= 3;
+        data &= 0xFF;
         chip.write_data = ((port << 7) & 0x100) | data;
         if ((port & 1) > 0) {
             /* Data */
