@@ -1,6 +1,7 @@
 package uk.co.omgdrv.simplevgm;
 
 import javax.sound.sampled.*;
+import java.time.Duration;
 
 public class EmuPlayer implements Runnable
 {
@@ -105,9 +106,11 @@ public class EmuPlayer implements Runnable
         }
     }
 
+    final static long SLEEP_NS = (ClassicEmu.bufLength / 3) * Duration.ofMillis(1).toNanos();
+
     // Called periodically when a track is playing
-    protected void idle()
-    {
+    protected void idle() {
+//        LockSupport.parkNanos(SLEEP_NS);
     }
 
 // private

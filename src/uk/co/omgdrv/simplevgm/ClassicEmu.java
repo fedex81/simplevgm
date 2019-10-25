@@ -16,7 +16,7 @@ import uk.co.omgdrv.simplevgm.util.StereoBuffer;
 
 public abstract class ClassicEmu extends MusicEmu {
 
-    static final int bufLength = 32;
+    public static final int bufLength = 32;
     protected StereoBuffer buf = new StereoBuffer("SmsApu");
 
     // derived class can override and mix its own samples here

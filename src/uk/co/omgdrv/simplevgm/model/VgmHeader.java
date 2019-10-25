@@ -81,6 +81,8 @@ public class VgmHeader {
     private int sn76489Shift;
     private int sn76489Flags;
 
+    private Gd3Tag gd3 = Gd3Tag.NO_TAG;
+
 
     private VgmHeader() {
     }
@@ -108,10 +110,13 @@ public class VgmHeader {
         }
         v.dataOffset=  getIntValue(data, DATA_OFFSET);
         v.dataOffset = v.dataOffset == 0 ? DEFAULT_DATA_OFFSET : v.dataOffset + DATA_OFFSET.getPosition();
+        if (v.gd3Offset > 0) {
+            v.gd3 = Gd3Tag.parseTag(data, v.gd3Offset + 0x14);
+        }
         return v;
     }
 
-    private static String toVersionString(int version){
+    public static String toVersionString(int version) {
         String major = Integer.toString((version >> 8) & 0xFF, 16);
         int minorVal = version & 0xFF;
         String minor = (minorVal < 10 ? "0" : "" ) + Integer.toString(minorVal, 16);
@@ -192,7 +197,7 @@ public class VgmHeader {
 
     @Override
     public String toString() {
-        return "VgmHeader{" +
+        String str = "VgmHeader{" +
                 "ident='" + ident + '\'' +
                 ", eofOffset=" + eofOffset +
                 ", version=" + versionString +
@@ -208,6 +213,8 @@ public class VgmHeader {
                 ", sn76489Shift=" + sn76489Shift +
                 ", sn76489Flags=" + sn76489Flags +
                 '}';
+        str += Gd3Tag.NO_TAG != gd3 ? gd3.toDataString() : "";
+        return str;
     }
 
 
