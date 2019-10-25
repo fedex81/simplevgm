@@ -879,7 +879,7 @@ public class Ym3438 implements IYm3438 {
         /* 32 bit unsigned */
         int test_dac = chip.mode_test_2c[5];
         /* 16 bit signed */
-        int out;
+        short out;
         /* 16 bit signed */
         int sign;
         /* 32 bit unsigned */
@@ -899,11 +899,11 @@ public class Ym3438 implements IYm3438 {
         }
         /* Ch 6 */
         if ((((cycles >> 2) == 1) && chip.dacen > 0) || test_dac > 0) {
-            out = chip.dacdata;
+            out = (short) chip.dacdata;
             out <<= 7;
             out >>= 7;
         } else {
-            out = chip.ch_lock;
+            out = (short) chip.ch_lock;
         }
         chip.mol = 0;
         chip.mor = 0;
