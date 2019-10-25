@@ -37,6 +37,14 @@ public interface IYm3438 {
 
     int OPN2_Read(IYm3438_Type chip, int port);
 
+    default boolean isWriteAddrEn(IYm3438_Type chip) {
+        return chip.write_a_en;
+    }
+
+    default boolean isWriteDataEn(IYm3438_Type chip) {
+        return chip.write_d_en;
+    }
+
 
     int ym3438_mode_ym2612 = 0x01;      /* Enables YM2612 emulation (MD1, MD2 VA2) */
     int ym3438_mode_readmode = 0x02;     /* Enables status read on any port (TeraDrive, MD1 VA7, MD2, etc) */

@@ -67,11 +67,20 @@ public class Ym2612Nuke implements MdFmProvider {
     private final static double rateRatio = FM_CALCS_PER_MS / CYCLE_PER_MS;
 
     public Ym2612Nuke() {
-        ym3438 = new Ym3438();
-        chip = new IYm3438.IYm3438_Type();
-        ym3438.OPN2_SetChipType(IYm3438.ym3438_mode_readmode);
+        this(new IYm3438.IYm3438_Type());
+//        this(new Ym3438Jna());
     }
 
+    public Ym2612Nuke(IYm3438.IYm3438_Type chip) {
+        this.ym3438 = new Ym3438();
+        this.chip = chip;
+        this.ym3438.OPN2_SetChipType(IYm3438.ym3438_mode_readmode);
+    }
+
+    public Ym2612Nuke(IYm3438 impl) {
+        this.ym3438 = impl;
+        this.ym3438.OPN2_SetChipType(IYm3438.ym3438_mode_readmode);
+    }
 
     @Override
     public void reset() {
@@ -104,7 +113,7 @@ public class Ym2612Nuke implements MdFmProvider {
 
     private boolean isReadyWrite() {
         boolean isBusyState = (ym3438.OPN2_Read(chip, 0) & FM_STATUS_BUSY_BIT_MASK) > 0;
-        boolean isWriteInProgress = chip.write_a_en || chip.write_d_en;
+        boolean isWriteInProgress = ym3438.isWriteAddrEn(chip) || ym3438.isWriteDataEn(chip);
         return !isBusyState && !isWriteInProgress;
     }
 
