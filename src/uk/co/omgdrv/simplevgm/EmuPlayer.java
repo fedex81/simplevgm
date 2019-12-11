@@ -90,6 +90,8 @@ public class EmuPlayer implements Runnable
             setVolume(volume_);
         }
         thread = new Thread(this);
+        thread.setName("simplevgm");
+        thread.setPriority(Thread.MAX_PRIORITY - 1);
         playing_ = true;
         thread.start();
     }
