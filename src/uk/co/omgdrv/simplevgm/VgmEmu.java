@@ -15,7 +15,7 @@ License along with this module; if not, write to the Free Software Foundation,
 Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA */
 
 import uk.co.omgdrv.simplevgm.fm.MdFmProvider;
-import uk.co.omgdrv.simplevgm.fm.YM2612;
+import uk.co.omgdrv.simplevgm.fm.nukeykt.Ym2612Nuke;
 import uk.co.omgdrv.simplevgm.fm.ym2413.Ym2413Provider;
 import uk.co.omgdrv.simplevgm.model.VgmFmProvider;
 import uk.co.omgdrv.simplevgm.model.VgmHeader;
@@ -71,7 +71,7 @@ public final class VgmEmu extends ClassicEmu {
         fm_clock_rate = vgmHeader.getYm2612Clk();
         if (fm_clock_rate > 0)
         {
-            fm = fm == VgmFmProvider.NO_SOUND ? new YM2612() : fm;
+            fm = fm == VgmFmProvider.NO_SOUND ? new Ym2612Nuke() : fm;
             buf.setVolume(0.7);
             fm.init(fm_clock_rate, sampleRate());
         }

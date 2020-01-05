@@ -1,3 +1,4 @@
 docs/**
 vgm/**
-native/**
+/out/
+/.idea/
