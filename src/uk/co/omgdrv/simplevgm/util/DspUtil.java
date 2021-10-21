@@ -1,8 +1,5 @@
 package uk.co.omgdrv.simplevgm.util;
 
-import com.laszlosystems.libresample4j.Resampler;
-import uk.me.berndporr.iirj.Cascade;
-
 import java.util.Arrays;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -17,35 +14,8 @@ import java.util.stream.Stream;
  */
 public class DspUtil {
 
-    public static final int DEFAULT_HIGH_PASS_CUTOFF_HZ = 10;
-    public static final int DEFAULT_LOW_PASS_CUTOFF_HZ = 10_000;
-
-    public static final int DEFAULT_BAND_PASS_CENTER_HZ = DEFAULT_LOW_PASS_CUTOFF_HZ / 2 + DEFAULT_HIGH_PASS_CUTOFF_HZ;
-    public static final int DEFAULT_BAND_PASS_WIDTH_HZ = DEFAULT_LOW_PASS_CUTOFF_HZ / 2;
-
     public static final int PSG_MAX_VOLUME_8_BIT = 0x20;
     public static final int PSG_MAX_VOLUME_16_BIT = 0x7FFF;
-
-
-    public static void bandPass(FilterHelper.FilterType type, double[] in, double[] out) {
-        Cascade filter = FilterHelper.setupBandPass(type, FilterHelper.FILTER_ORDER, in.length,
-                DEFAULT_BAND_PASS_CENTER_HZ, DEFAULT_BAND_PASS_WIDTH_HZ);
-        filterAll(filter, in, out);
-    }
-
-    public static void highPass(FilterHelper.FilterType type, double[] in, double[] out) {
-        Cascade filter = FilterHelper.setupHighPass(type, FilterHelper.FILTER_ORDER, in.length, DEFAULT_HIGH_PASS_CUTOFF_HZ);
-        filterAll(filter, in, out);
-    }
-
-    public static void lowPass(FilterHelper.FilterType type, double[] in, double[] out) {
-        Cascade filter = FilterHelper.setupLowPass(type, FilterHelper.FILTER_ORDER, in.length, DEFAULT_LOW_PASS_CUTOFF_HZ);
-        filterAll(filter, in, out);
-    }
-
-    private static void filterAll(Cascade filter, double[] in, double[] out) {
-        IntStream.range(0, in.length).forEach(i -> out[i] = filter.filter(in[i]));
-    }
 
     public static void fastHpfResample(double[] in, double[] out) {
         int sampleRatio = in.length / out.length;
@@ -117,13 +87,6 @@ public class DspUtil {
             out[i] = in[i] - in[i - 2] / 2;
         }
         out[0] = in[0];
-    }
-
-
-    public static void resample4j(float[] in, float[] out) {
-        double ratio = in.length / out.length;
-        Resampler res = new Resampler(false, ratio, ratio);
-        res.process(ratio, in, 0, in.length, true, out, 0, out.length);
     }
 
     public static void scale8bit(double[] in, byte[] out) {

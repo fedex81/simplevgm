@@ -6,10 +6,9 @@ package uk.co.omgdrv.simplevgm.util;
  * @Copyright Shay Greeen
  * @Copyright Federico Berti
  */
-public final class StereoBuffer
-{
-    private BlipBuffer[] bufs = new BlipBuffer[3];
-    private String name;
+public final class StereoBuffer {
+    private final BlipBuffer[] bufs = new BlipBuffer[3];
+    private final String name;
 
     // Same behavior as in BlipBuffer unless noted
 

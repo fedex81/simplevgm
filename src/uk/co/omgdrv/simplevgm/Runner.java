@@ -20,12 +20,12 @@ import java.util.stream.Collectors;
  */
 public class Runner {
 
-    private static boolean DISABLE_PSG = false;
-    private static String VGM_FOLDER = "vgm";
-    private static String VGM_FILE = null; //"vgm/ps_fm_01.vgm"; //"vgm/flash/Flash, The - 01  - Title Screen.vgz";
-    private static boolean runPsgCompare = false;
+    private static final boolean DISABLE_PSG = false;
+    private static final String VGM_FOLDER = "vgm";
+    private static final String VGM_FILE = "vgm/adv_batman_01.vgz";
+    private static final boolean runPsgCompare = false;
 
-    private static Predicate<Path> vgmFilesPredicate = p ->
+    private static final Predicate<Path> vgmFilesPredicate = p ->
             p.toString().endsWith(".vgm") || p.toString().endsWith(".vgz");
 
     public static void main(String[] args) throws Exception {

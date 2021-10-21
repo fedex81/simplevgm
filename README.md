@@ -29,14 +29,7 @@ SN76489 PSG implementations:
 4. Alexey Khokholov (Nuke.YKT): Nuked-PSG
    https://github.com/nukeykt/Nuked-PSG
 
-An IIR filter library written in JAVA.  
-Bernd Porr  
-https://github.com/berndporr/iirj
-
-libresample4j  
-https://github.com/dnault/libresample4j
-
-YM2413 emulation  
+YM2413 emulation
 Mitsutaka Okazaki  
 https://github.com/digital-sound-antiques/emu2413
 
